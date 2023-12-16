@@ -43,8 +43,11 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 `SUBSCRIPTION_NAME`: Your Subscription Name to use in some Messages of the Bot.
 
 `DISCORD_CLIENT_TOKEN:` Your Discord Bot's token [Check here where to get it](https://discord.com/developers/applications).
+
 `DATABASE_URL:` Your Mongo DB URL (something like this: mongodb+srv://user:password@cluster.mongodb.net).
+
 `DABASE_NAME`: Your database name.
+
 `DATABASE_COLLECTION_NAME`: Your sub category database name, known as collection name.
 
 `CHECK_HOURS`: Time in hours that the function check should be activated.
@@ -53,11 +56,14 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 `COMMAND_NAME_STATUS`: Name of the user link/email command should be called.
 
 `STRIPE_API_KEY`: API Key from Stripe.
+
 `STRIPE_PAYMENT_LINK`: Payment Link that users should use to get a subscription.
 `STRIPE_PORTAL_LINK`: Portal/User Dashboard Link that users should use to go to the configuration portal of the subscriptions.
 
 `PAYING_ROLE_ID`: Role id that should be given to the user that has an active subscription.
+
 `GUILD_ID`: Guild id that the bot should work.
+
 `CLIENT_ID`: Discord bot id. (id of the bot itself)
 
 `LOGS_CHANNEL_ID`: Channel Id in the guild id provided for the bot sends logs (sucessfull e-mail links and cancelled subscriptions).
