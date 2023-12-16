@@ -4,7 +4,6 @@ module.exports = {
     name: Events.InteractionCreate,
  
     async execute(interaction, client) {
-        //if (!interaction.guild) return interaction.reply(`You cannot user commands here!`);
  
         if (interaction.isCommand()) {
             const command = interaction.client.commands.get(interaction.commandName);
