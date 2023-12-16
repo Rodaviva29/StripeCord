@@ -53,7 +53,9 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 `CHECK_HOURS`: Time in hours that the function check should be activated.
 
 `COMMAND_NAME_STATUS`: Name of the administration verification command user status should be called.
-`COMMAND_NAME_STATUS`: Name of the user link/email command should be called.
+`COMMAND_NAME_LINK`: Name of the user link/email command should be called.
+
+`COMMAND_NAME_ADMIN_LINK`: Name of the admin force link/email command should be called.
 
 `STRIPE_API_KEY`: API Key from Stripe.
 
