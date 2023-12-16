@@ -1,4 +1,4 @@
-The Ultimate Discord Bot for Seamless Subscription Management with Stripe!
+**The Ultimate Discord Bot for Seamless Subscription Management with Stripe!**
 
 This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
 
