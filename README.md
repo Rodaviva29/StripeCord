@@ -74,5 +74,6 @@ We hope you enjoy using Stripe Cord. If you have any questions or issues, feel f
 
 ## Acknowledgements
 
-Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot)
+Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
+
 This version is a simplified version with JavaScript instead of TypeScript and it works with Mongo DB Atlas instead of PostGres to be ready to go!
