@@ -17,8 +17,8 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 3. Change the file `.env.example` to `.env`.
 4. Configure the necessary environment variables in `.env`.
 
-5A. Start the application: `npm start`
-5B. If you are using pm2 as JS manager, you can use pm2 start index.js --name name_of_your_choice instead of `npm start`
+6. Start the application: `npm start`
+7. If you are using pm2 as JS manager, you can use pm2 start index.js --name name_of_your_choice instead of `npm start`
 
 ## Mongo DB Atlas Setup
 
