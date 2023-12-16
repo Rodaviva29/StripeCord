@@ -72,14 +72,14 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 This project is licensed under the MIT License - check the [LICENSE.md](LICENSE.md) file for details.
 
----
-
-We hope you enjoy using Stripe Cord. If you have any questions or issues, feel free to contact me on Discord (prefereble) or via email. My Discord nickname is `Rodaviva`, and you can reach me at `rodaviva29@gmail.com` via mail.
-
-**Safe Contributions!** 💸
-
 ## Acknowledgements
 
 Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
 
 This version is a simplified version with JavaScript instead of TypeScript and it works with Mongo DB Atlas instead of PostGres to be ready to go!
+
+---
+
+We hope you enjoy using Stripe Cord. If you have any questions or issues, feel free to contact me on Discord (prefereble) or via email. My Discord nickname is `Rodaviva`, and you can reach me at `rodaviva29@gmail.com` via mail.
+
+**Safe Contributions!** 💸
