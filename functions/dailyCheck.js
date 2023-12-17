@@ -66,6 +66,7 @@ module.exports = async function DailyCheck(client) {
             const member = guild.members.cache.get(customer.discordUserID);
             if (member) {
                 member.roles.add(process.env.PAYING_ROLE_ID);
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
 
             continue;
