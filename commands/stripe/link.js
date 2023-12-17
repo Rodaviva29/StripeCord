@@ -200,7 +200,7 @@ module.exports = {
             logsChannel?.send(`:arrow_upper_right: **${member.user?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) linked with: \`${customer.email}\`.`);
 
             const acessGranted = new EmbedBuilder()
-                .setDescription(`Woohoo! Your account has been **linked successfully**.\nNow your Discord privileges are automatically renewed.`)
+                .setDescription(`:white_check_mark: | Woohoo! Your account has been **linked successfully**.\nNow your Discord privileges are automatically renewed.`)
                 .setColor('#C4F086');
 
 

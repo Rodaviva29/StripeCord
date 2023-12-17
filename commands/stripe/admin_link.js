@@ -170,10 +170,10 @@ module.exports = {
 
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
-            logsChannel?.send(`:arrow_upper_right: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) linked **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with: \`${customer.email}\`.`);
+            logsChannel?.send(`:asterisk: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) linked **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with: \`${customer.email}\`.`);
 
             const acessGranted = new EmbedBuilder()
-                .setDescription(`Woohoo! **${member.user?.tag || 'Unknown Account'}** account has been **linked successfully** with ${email}.\nNow the customer Discord privileges are automatically renewed.`)
+                .setDescription(`:white_check_mark: | Woohoo! **${member.user?.tag || 'Unknown Account'}** account has been **linked successfully** with ${email}.\nNow the customer Discord privileges are automatically renewed.`)
                 .setColor('#C4F086');
 
             // Send the success message to the user who used the command in ephemeral mode

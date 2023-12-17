@@ -53,6 +53,9 @@ module.exports = async function DailyCheck(client) {
         const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions) || [];
 
         if (activeSubscriptions.length > 0) {
+
+            const member = guild.members.cache.get(customer.discordUserID);
+            
             console.log(`${customer.email} has active subscription(s).`);
 
             if (!customer.hadActiveSubscription) {
@@ -61,12 +64,12 @@ module.exports = async function DailyCheck(client) {
                         hadActiveSubscription: true
                     }
                 });
+
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
 
-            const member = guild.members.cache.get(customer.discordUserID);
             if (member) {
                 member.roles.add(process.env.PAYING_ROLE_ID);
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
 
             continue;
