@@ -91,7 +91,7 @@ module.exports = {
         const waitMessage = new EmbedBuilder()
         .setColor("#2B2D31")
         .setThumbnail("https://cdn.discordapp.com/emojis/653399136737165323.gif?v=1")
-        .setDescription("Were checking customer's account status for more information.")
+        .setDescription(`Were checking ${user.tag} account status for more information.`)
         .setFooter({ text: 'Hold on teight. This may take a few seconds.'});
 
         await interaction.reply({ embeds: [waitMessage], ephemeral: true });
