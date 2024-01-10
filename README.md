@@ -30,6 +30,7 @@ This project is licensed under the MIT License - check the [LICENSE.md](LICENSE.
 Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
 
 This version is a simplified version with JavaScript instead of TypeScript
+
 **Database Core**: Mongo DB Atlas instead of PostGres to be ready to go!
 
 NOTE: If you want to change the database type to SQL, I can open a branch for you, give me a thumbs up!
