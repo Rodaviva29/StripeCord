@@ -17,7 +17,7 @@ If anyone would like to help the project, I would be grateful if you could make 
 3. Admin Command to Check the Status of the Subscription from Stripe;
 4. Configure the name of the commands, the time the check will execute and more with `.env` file.
 
-## WIKI
+## Wiki / Documentation
 
 Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project.
 
