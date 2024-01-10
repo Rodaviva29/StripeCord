@@ -10,6 +10,13 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
 
+## Features
+
+1. Force Link Users to a E-mail with a Command;
+2. Users themselfs can Link their E-mail with a Command;
+3. Admin Command to Check the Status of the Subscription from Stripe;
+4. Configure the name of the commands, the time the check will execute and more with `.env` file.
+
 ## Technical Requirements
 
 - **Node.js:** v18.0.0 or higher
