@@ -13,13 +13,20 @@ const getExpiredEmbed = () => {
 const makeMemberExpire = async (customer, member, guild, collection) => {
 
     await collection.updateOne(
-        { discordUserID: member.id },
+        { discordUserID: customer.discordUserID },
         {
             $set: {
                 hadActiveSubscription: false
             }
         }
     );
+
+    // If the member is not in the guild, we can't remove the role
+    // Log specifically that they left the group and the role was already removed before they left
+    if (!member) {
+        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) __left the group__ and lost privileges. Email: \`${customer.email}\`.`); 
+        return;
+    }
 
     member?.roles.remove(process.env.PAYING_ROLE_ID);
     guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) lost privileges. Email: \`${customer.email}\`.`); 
@@ -45,9 +52,30 @@ module.exports = async function DailyCheck(client) {
         const customerId = await stripe_1.resolveCustomerIdFromEmail(customer.email);
 
         if (!customerId) {
+
+            const member = guild.members.cache.get(customer.discordUserID);
+
             console.log(`[Account Verification] Could not find customer id for ${customer.email}`);
-            continue;
+
+            if (customer.hadActiveSubscription === true) {
+                await collection.updateOne({ _id: customer._id }, {
+                    $set: {
+                        hadActiveSubscription: false
+                    }
+                    
+            });
+
+            // If the member is not in the guild, we can't remove the role
+            // Log specifically that they left the group and the role was already removed before they left
+            if (!member) {
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:**: **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) __left the group__ and has an Email that is not being recognized. Email: \`${customer.email}\`.`); 
+                return;
+            }
+
+            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
+            
         }
+      }
 
         const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
         const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions) || [];
@@ -63,9 +91,9 @@ module.exports = async function DailyCheck(client) {
                     $set: {
                         hadActiveSubscription: true
                     }
-                });
+            });
 
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) had accesses added again. Email: \`${customer.email}\`.`); 
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member?.id || customer.discordUserID}, <@${member?.id || customer.discordUserID}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
 
             if (member) {
