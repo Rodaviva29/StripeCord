@@ -20,6 +20,8 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.cooldowns = new Collection();
+
 client.database = handler.mongoDBHandler();
 
 handler.LoadEvents(client);
