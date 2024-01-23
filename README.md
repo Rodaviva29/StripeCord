@@ -4,9 +4,7 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 ## TO-DO LIST
 
-- Make some verifications if the user leave the Discord to don't make errors;
-- Command to delete a user from the database;
-- Command to force sync (execute the "daily-check").
+- Add support for multiple roles according to the subscription label.
 
 If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
 
