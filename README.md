@@ -2,7 +2,7 @@
 
 This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
 
-## IMPORTANT NOTICE
+## :warning: IMPORTANT NOTICE
 
 - This is a dev branch, please don't use in production unless you know what you are doing.
 
@@ -15,10 +15,11 @@ If anyone would like to help the project, I would be grateful if you could make 
 
 ## Features
 
-1. Force Link Users to a E-mail with a Command;
-2. Users themselfs can Link their E-mail with a Command;
+1. Force Link Users to an E-mail with a Command;
+2. Users themselfs can Link their E-mail with a Command or w/ a Message Button;
 3. Admin Command to Check the Status of the Subscription from Stripe;
-4. Configure the name of the commands, the time the check will execute and more with `.env` file.
+4. Configure the name of the commands, the time the check will execute and + with `.env` file and `config/plans.js`.
+5. Support for different Discord Roles for Different Plans and Stripe Subscriptions. (Plan ID, price_XXX)
 
 ## Wiki / Documentation
 
