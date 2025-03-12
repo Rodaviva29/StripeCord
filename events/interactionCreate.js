@@ -1,13 +1,29 @@
-const { Events, InteractionType, Collection  } = require('discord.js');
+const { Events, InteractionType, Collection } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
  
+// Load all interaction handlers from the interactions directory
+const interactionHandlers = new Map();
+const interactionsPath = path.join(__dirname, '..', 'interactions');
+
+if (fs.existsSync(interactionsPath)) {
+    const interactionFiles = fs.readdirSync(interactionsPath).filter(file => file.endsWith('.js'));
+    
+    for (const file of interactionFiles) {
+        const interaction = require(path.join(interactionsPath, file));
+        interactionHandlers.set(interaction.customId, interaction);
+    }
+}
+
 module.exports = {
     name: Events.InteractionCreate,
  
     async execute(interaction, client) {
- 
+        const database = await client.database;
+
+        // Handle slash commands
         if (interaction.isCommand()) {
             const command = interaction.client.commands.get(interaction.commandName);
-            const database = await interaction.client.database
 
             const { cooldowns } = interaction.client;
 
@@ -45,6 +61,20 @@ module.exports = {
                     await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
                 } else {
                     await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                }
+            }
+        }
+
+        // Handle button interactions and modal submissions using the interaction handlers
+        if ((interaction.isButton() || interaction.isModalSubmit()) && interactionHandlers.has(interaction.customId)) {
+            try {
+                await interactionHandlers.get(interaction.customId).execute(interaction, client, database);
+            } catch (error) {
+                console.error(`Error executing interaction handler for ${interaction.customId}:`, error);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'There was an error while processing your interaction!', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: 'There was an error while processing your interaction!', ephemeral: true });
                 }
             }
         }

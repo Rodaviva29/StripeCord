@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, PermissionFlagsBits } = require('discord.js');
 
 const stripe_1 = require("../../integrations/stripe");
+const planConfig = require("../../config/plans");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -164,9 +165,34 @@ module.exports = {
         const member = await interaction.guild?.members.fetch(customer_discord.id)?.catch(() => { });
 
         if (member) {
-
-            // Add the subscribe role to the member (configure this in your .env file)
-            await member.roles.add(process.env.PAYING_ROLE_ID);
+            // Check if we have plan-specific role mappings
+            const planRoles = planConfig.planRoles;
+            const planRoleEntries = Object.entries(planRoles);
+            
+            if (planRoleEntries.length > 0) {
+                // Multi-role mode: assign roles based on subscription plan IDs
+                let assignedRoles = [];
+                
+                for (const subscription of activeSubscriptions) {
+                    // Get the plan ID from the subscription
+                    const planId = subscription.items.data[0]?.plan.id;
+                    
+                    if (planId && planRoles[planId]) {
+                        // If we have a role mapping for this plan, add the role
+                        await member.roles.add(planRoles[planId]);
+                        assignedRoles.push(planId);
+                    }
+                }
+                
+                // If no plan-specific roles were assigned but we have active subscriptions,
+                // fall back to the default role
+                if (assignedRoles.length === 0 && planConfig.defaultRole) {
+                    await member.roles.add(planConfig.defaultRole);
+                }
+            } else {
+                // Legacy mode: just add the single role defined in .env
+                await member.roles.add(process.env.PAYING_ROLE_ID);
+            }
 
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);

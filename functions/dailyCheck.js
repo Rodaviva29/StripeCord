@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const stripe_1 = require("../integrations/stripe");
+const planConfig = require("../config/plans");
 
 const getExpiredEmbed = () => {
     const embed = new EmbedBuilder()
@@ -28,7 +29,22 @@ const makeMemberExpire = async (customer, member, guild, collection) => {
         return;
     }
 
-    member?.roles.remove(process.env.PAYING_ROLE_ID);
+    // Remove the default role if it exists
+    if (planConfig.defaultRole) {
+        member?.roles.remove(planConfig.defaultRole);
+    }
+    
+    // Remove any plan-specific roles
+    const planRoleIds = Object.values(planConfig.planRoles);
+    if (planRoleIds.length > 0) {
+        for (const roleId of planRoleIds) {
+            member?.roles.remove(roleId).catch(() => {});
+        }
+    } else {
+        // Legacy mode - remove the single role defined in .env
+        member?.roles.remove(process.env.PAYING_ROLE_ID);
+    }
+    
     guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) lost privileges. Email: \`${customer.email}\`.`); 
 
 };
@@ -97,7 +113,34 @@ module.exports = async function DailyCheck(client) {
             }
 
             if (member) {
-                member.roles.add(process.env.PAYING_ROLE_ID);
+                // Check if we have plan-specific role mappings
+                const planRoles = planConfig.planRoles;
+                const planRoleEntries = Object.entries(planRoles);
+                
+                if (planRoleEntries.length > 0) {
+                    // Multi-role mode: assign roles based on subscription plan IDs
+                    let assignedRoles = [];
+                    
+                    for (const subscription of activeSubscriptions) {
+                        // Get the plan ID from the subscription
+                        const planId = subscription.items.data[0]?.plan.id;
+                        
+                        if (planId && planRoles[planId]) {
+                            // If we have a role mapping for this plan, add the role
+                            await member.roles.add(planRoles[planId]);
+                            assignedRoles.push(planId);
+                        }
+                    }
+                    
+                    // If no plan-specific roles were assigned but we have active subscriptions,
+                    // fall back to the default role
+                    if (assignedRoles.length === 0 && planConfig.defaultRole) {
+                        await member.roles.add(planConfig.defaultRole);
+                    }
+                } else {
+                    // Legacy mode: just add the single role defined in .env
+                    await member.roles.add(process.env.PAYING_ROLE_ID);
+                }
             }
 
             continue;

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, PermissionFlagsBits } = require('discord.js');
 
 const stripe_1 = require("../../integrations/stripe");
+const planConfig = require("../../config/plans");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -117,10 +118,10 @@ module.exports = {
 
         // Waiting message while we check the user's account status.
         const waitMessage = new EmbedBuilder()
-        .setColor("#2B2D31")
-        .setThumbnail("https://cdn.discordapp.com/emojis/653399136737165323.gif?v=1")
-        .setDescription("Were checking your account status for more information.")
-        .setFooter({ text: 'Hold on teight. This may take a few seconds.'});
+            .setColor("#2B2D31")
+            .setThumbnail("https://cdn.discordapp.com/emojis/653399136737165323.gif?v=1")
+            .setDescription("Were checking your account status for more information.")
+            .setFooter({ text: 'Hold on teight. This may take a few seconds.'});
 
         await interaction.reply({ embeds: [waitMessage], ephemeral: true });
 
@@ -191,9 +192,34 @@ module.exports = {
         const member = await interaction.guild?.members.fetch(interaction.user.id)?.catch(() => { });
 
         if (member) {
-
-            // Add the subscribe role to the member (configure this in your .env file)
-            await member.roles.add(process.env.PAYING_ROLE_ID);
+            // Check if we have plan-specific role mappings
+            const planRoles = planConfig.planRoles;
+            const planRoleEntries = Object.entries(planRoles);
+            
+            if (planRoleEntries.length > 0) {
+                // Multi-role mode: assign roles based on subscription plan IDs
+                let assignedRoles = [];
+                
+                for (const subscription of activeSubscriptions) {
+                    // Get the plan ID from the subscription
+                    const planId = subscription.items.data[0]?.plan.id;
+                    
+                    if (planId && planRoles[planId]) {
+                        // If we have a role mapping for this plan, add the role
+                        await member.roles.add(planRoles[planId]);
+                        assignedRoles.push(planId);
+                    }
+                }
+                
+                // If no plan-specific roles were assigned but we have active subscriptions,
+                // fall back to the default role
+                if (assignedRoles.length === 0 && planConfig.defaultRole) {
+                    await member.roles.add(planConfig.defaultRole);
+                }
+            } else {
+                // Legacy mode: just add the single role defined in .env
+                await member.roles.add(process.env.PAYING_ROLE_ID);
+            }
 
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
@@ -202,7 +228,6 @@ module.exports = {
             const acessGranted = new EmbedBuilder()
                 .setDescription(`:white_check_mark: | Woohoo! Your account has been **linked successfully**.\nNow your Discord privileges are automatically renewed.`)
                 .setColor('#C4F086');
-
 
             // Send the success message to the user who used the command in ephemeral mode
             await interaction.editReply({ embeds: [acessGranted], ephemeral: true });
