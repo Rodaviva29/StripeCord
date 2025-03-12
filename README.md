@@ -2,9 +2,14 @@
 
 This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
 
-## TO-DO LIST
+## IMPORTANT NOTICE
 
-- Add support for multiple roles according to the subscription label.
+- This is a dev branch, please don't use in production unless you know what you are doing.
+
+### Added features
+- Branch with added support for Discloud Easy Host (discloud.config).
+- Branch with added support for Multiple Roles and Multiple Plans.
+- Branch with added support for Button Command to be able to simulate the /link command.
 
 If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
 
