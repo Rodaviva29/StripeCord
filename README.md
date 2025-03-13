@@ -3,7 +3,7 @@
 This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
 
 ## 🧪 Beta Notes  
-- Stripe Cord is having a big overhaul with support for multiple roles and more, check Stripe Cord V2 in [Dev Branch](https://github.com/Rodaviva29/StripeCord/tree/dev)
+- Stripe Cord is having a big overhaul with support for multiple roles and more, check Stripe Cord V2 in [Dev Branch](https://github.com/Rodaviva29/StripeCord/tree/dev).
 - This is a **tested Beta Version**, not a full release. Breaking errors may occur, please report them in my Discord DM `Rodaviva` — I’d greatly appreciate it!
 
 If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
