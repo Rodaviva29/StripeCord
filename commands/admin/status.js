@@ -37,7 +37,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`:x: | There is no **Stripe Account** associated with ${user.tag} account.`)
                 .setColor('#FD5D5D');
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
 
             return;
         } 
@@ -49,7 +49,7 @@ module.exports = {
         .setDescription(`Were checking ${user.tag} account status for more information.`)
         .setFooter({ text: 'Hold on teight. This may take a few seconds.'});
 
-        await interaction.reply({ embeds: [waitMessage], ephemeral: true });
+        await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
         
         const customerId = await stripe_1.resolveCustomerIdFromEmail(discordCustomer.email);
         const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
@@ -97,6 +97,6 @@ module.exports = {
                 }).join('\n') : "There are no subscriptions for this customer."
             },
         ]);
-        await interaction.editReply({ embeds: [status], ephemeral: true });
+        await interaction.editReply({ embeds: [status], flags: "Ephemeral" });
     }
 };

@@ -47,7 +47,12 @@ exports.resolveCustomerIdFromEmail = resolveCustomerIdFromEmail;
 const findSubscriptionsFromCustomerId = async (oldCustomerId) => {
     await sleep(2000); // 2-second delay
 
-    const response = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${oldCustomerId}`, {
+    // Build URL based on CHECK_STATUS
+    const url = process.env.CHECK_STATUS === "active" 
+    ? `https://api.stripe.com/v1/subscriptions?customer=${oldCustomerId}&status=active`
+    : `https://api.stripe.com/v1/subscriptions?customer=${oldCustomerId}`;
+
+    const response = await fetch(url, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${process.env.STRIPE_API_KEY}`

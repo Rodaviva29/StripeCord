@@ -20,7 +20,7 @@ module.exports = {
         const member = await interaction.guild?.members.fetch(customer_discord.id)?.catch(() => { });
 
         if (!member) {
-            interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${customer_discord?.id}) __it's not in Discord Server__, please remove the data directly from the DB!`, ephemeral: true });
+            interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${customer_discord?.id}) __it's not in Discord Server__, please remove the data directly from the DB!`, flags: "Ephemeral" });
             return;
         }
 
@@ -36,12 +36,12 @@ module.exports = {
             });
     
             if (!userCustomer) {
-                interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${member.user?.id}) __it's not in the database__!`, ephemeral: true });
+                interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${member.user?.id}) __it's not in the database__!`, flags: "Ephemeral" });
                 return;
             }
 
             if (userCustomer.hadActiveSubscription) {
-                interaction.reply({ content: `❌ | It is not possible to remove the user. There is still an active subscription at **${userCustomer.email}**.`, ephemeral: true });
+                interaction.reply({ content: `❌ | It is not possible to remove the user. There is still an active subscription at **${userCustomer.email}**.`, flags: "Ephemeral" });
                 return;
             }
             
@@ -54,7 +54,7 @@ module.exports = {
                 
     
             const confirmationMessage = await interaction.reply({ embeds: [embed],
-                ephemeral: true,
+                flags: "Ephemeral",
                 components: [
                     new ActionRowBuilder()
                         .addComponents(
@@ -74,7 +74,7 @@ module.exports = {
 
             let buttonClicked = false;
 
-            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000, max: 1  });
             
             collector.on('collect', async (buttonInteraction) => {
                 buttonClicked = true;
@@ -97,7 +97,7 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            interaction.reply({ content: 'An error was logged when executing this command.', ephemeral: true });
+            interaction.reply({ content: 'An error was logged when executing this command.', flags: "Ephemeral" });
         }
     }
 };

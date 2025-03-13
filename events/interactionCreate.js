@@ -41,7 +41,7 @@ module.exports = {
             
                 if (now < expirationTime) {
                     const expiredTimestamp = Math.round(expirationTime / 1_000);
-                    return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, ephemeral: true });
+                    return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, flags: "Ephemeral" });
                 }
             }
     
@@ -58,9 +58,9 @@ module.exports = {
             } catch (error) {
                 console.error(error);
                 if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                    await interaction.followUp({ content: 'There was an error while executing this command!', flags: "Ephemeral" });
                 } else {
-                    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                    await interaction.reply({ content: 'There was an error while executing this command!', flags: "Ephemeral" });
                 }
             }
         }
@@ -72,9 +72,9 @@ module.exports = {
             } catch (error) {
                 console.error(`Error executing interaction handler for ${interaction.customId}:`, error);
                 if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ content: 'There was an error while processing your interaction!', ephemeral: true });
+                    await interaction.followUp({ content: 'There was an error while processing your interaction!', flags: "Ephemeral" });
                 } else {
-                    await interaction.reply({ content: 'There was an error while processing your interaction!', ephemeral: true });
+                    await interaction.reply({ content: 'There was an error while processing your interaction!', flags: "Ephemeral" });
                 }
             }
         }

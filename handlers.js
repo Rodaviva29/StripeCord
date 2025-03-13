@@ -1,7 +1,6 @@
 const { REST, Routes } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
-require('dotenv').config();
 
 const { MongoClient } = require('mongodb');
 
@@ -64,7 +63,7 @@ module.exports = {
                 client.on(event.name, (...args) => event.execute(...args, client));
             }
         }
-        console.log(`Loading ${eventFiles.length} ${eventFiles.length === 1 ? "event" : "events"}.`);
+        console.log(`Successfully loaded ${eventFiles.length} ${eventFiles.length === 1 ? "event" : "events"}.`);
     },
 
 

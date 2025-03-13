@@ -16,6 +16,6 @@ module.exports = {
         console.log("Manually triggering daily check...");
         dailyCheck(client, database);
 
-        await interaction.reply({ content: "🔄 | Stripe check **triggered**!\n\n⚠️ Please don't use this command more than __once an hour or two__.", ephemeral: true });
+        await interaction.reply({ content: "🔄 | Stripe check **triggered**!\n\n⚠️ Please don't use this command more than __once an hour or two__.", flags: "Ephemeral" });
     },
 };

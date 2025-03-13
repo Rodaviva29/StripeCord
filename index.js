@@ -1,7 +1,8 @@
 const { Partials, GatewayIntentBits, Client, Collection, } = require('discord.js');
 const handler = require('./handlers');
+const path = require('node:path');
 
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, 'config', '.env') });
 
 const client = new Client({
     partials: [

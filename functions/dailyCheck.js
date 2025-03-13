@@ -2,23 +2,32 @@ const { EmbedBuilder } = require('discord.js');
 const stripe_1 = require("../integrations/stripe");
 const planConfig = require("../config/plans");
 
-const getExpiredEmbed = () => {
+const getExpiredEmbed = (hasSubscriptions = false, roleName = null) => {
     const embed = new EmbedBuilder()
-        .setTitle('Your automatic contribution has expired!')
+        .setTitle(hasSubscriptions ? 'One of your automatic contribution has expired!' : 'Your automatic contribution has expired!')
         .setURL(`${process.env.STRIPE_PAYMENT_LINK}`)
         .setColor("#73a3c1")
-        .setDescription(`Please visit ${process.env.STRIPE_PAYMENT_LINK} to maintain your benefits.`);
+        .setDescription(`Please visit ${process.env.STRIPE_PAYMENT_LINK} to maintain your ${roleName ? `${roleName}` : ''} benefits.`);
     return embed;
 };
 
 const makeMemberExpire = async (customer, member, guild, collection) => {
 
+    // Create update object with hadActiveSubscription set to false
+    const updateObj = {
+        hadActiveSubscription: false
+    };
+    
+    // Set all plan-specific flags to false
+    const planRoles = planConfig.planRoles;
+    for (const planId in planRoles) {
+        updateObj[`plans.${planId}`] = false;
+    }
+    
     await collection.updateOne(
         { discordUserID: customer.discordUserID },
         {
-            $set: {
-                hadActiveSubscription: false
-            }
+            $set: updateObj
         }
     );
 
@@ -103,11 +112,19 @@ module.exports = async function DailyCheck(client) {
             console.log(`${customer.email} has active subscription(s).`);
 
             if (!customer.hadActiveSubscription) {
+                // Create update object with hadActiveSubscription set to true
+                const updateObj = {
+                    hadActiveSubscription: true
+                };
+                
+                // Initialize plans object if it doesn't exist
+                if (!customer.plans) {
+                    updateObj.plans = {};
+                }
+                
                 await collection.updateOne({ _id: customer._id }, {
-                    $set: {
-                        hadActiveSubscription: true
-                    }
-            });
+                    $set: updateObj
+                });
 
                 guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member?.id || customer.discordUserID}, <@${member?.id || customer.discordUserID}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
@@ -129,6 +146,14 @@ module.exports = async function DailyCheck(client) {
                             // If we have a role mapping for this plan, add the role
                             await member.roles.add(planRoles[planId]);
                             assignedRoles.push(planId);
+                            
+                            // Update the database to track this specific plan
+                            const planUpdate = {};
+                            planUpdate[`plans.${planId}`] = true;
+                            await collection.updateOne(
+                                { _id: customer._id },
+                                { $set: planUpdate }
+                            );
                         }
                     }
                     
@@ -142,21 +167,107 @@ module.exports = async function DailyCheck(client) {
                     await member.roles.add(process.env.PAYING_ROLE_ID);
                 }
             }
-
-            continue;
         }
 
         if (!customer.hadActiveSubscription){
-            console.log(`[Account Verification] Skipping inactive customer: ${customer.email}`);
+            console.log(`[Account Verification] Skipping inactive customer: ${customer.email}.`);
             continue;
         }
 
-        if (!subscriptions.some((sub) => sub.status === 'unpaid')) {
+        // Check for expired or canceled subscriptions
+        // If there are no active subscriptions but the user had them before, handle expiration
+        // Also handle the case where all/every subscriptions are 'unpaid'
+        if ((activeSubscriptions.length === 0 || subscriptions.every(sub => sub.status === 'unpaid')) && customer.hadActiveSubscription) {
             const member = guild.members.cache.get(customer.discordUserID);
-            console.log(`[Account Verification] Found subscription unpaid: ${customer.email}`);
-            member?.send({ embeds: [getExpiredEmbed(0)] }).catch(() => {});
+            console.log(`[Account Verification] No active subscriptions found for: ${customer.email}.`);
+            member?.send({ embeds: [getExpiredEmbed()] }).catch(() => {});
             makeMemberExpire(customer, member, guild, collection);
             continue;
+        }
+        
+        // Handle partial subscription expirations (some plans active, some expired or unpaid)
+        if (activeSubscriptions.length > 0 && customer.plans) {
+            const member = guild.members.cache.get(customer.discordUserID);
+            if (member) {
+                const planRoles = planConfig.planRoles;
+                
+                // First, check which plans in customer.plans are no longer active
+                for (const planId in customer.plans) {
+                    if (customer.plans[planId] === true) {
+                        // Check if this plan is still in the active subscriptions
+                        // Also check if the subscription is unpaid
+                        const stillActive = activeSubscriptions.some(sub => {
+                            const subPlanId = sub.items.data[0]?.plan.id;
+                            return subPlanId === planId;
+                        });
+                        
+                        // Check if this plan exists in subscriptions but is unpaid
+                        const isUnpaid = subscriptions.some(sub => {
+                            const subPlanId = sub.items.data[0]?.plan.id;
+                            return subPlanId === planId && sub.status === 'unpaid';
+                        });
+                        
+                        if ((!stillActive || isUnpaid) && planRoles[planId]) {
+                            // This plan is no longer active, remove its role and update DB
+                            console.log(`[Account Verification] Plan ${planId} expired for: ${customer.email}.`);
+                            member.roles.remove(planRoles[planId]).catch(() => {});
+                            
+                            // Update the database to mark this plan as inactive
+                            const planUpdate = {};
+                            planUpdate[`plans.${planId}`] = false;
+                            await collection.updateOne(
+                                { _id: customer._id },
+                                { $set: planUpdate }
+                            );
+                            
+                            // Get the role name from the guild's roles collection
+                            const role = guild.roles.cache.get(planRoles[planId]);
+                            const roleName = role ? role.name : null;
+                            
+                            // Notify the user about the expired subscription
+                            member.send({ embeds: [getExpiredEmbed(true, roleName)] }).catch(() => {});
+                            
+                            // Log the expiration
+                            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member.user.tag}** (${member.id}, <@${member.id}>) lost privileges for plan ${planId}, role <@&${planRoles[planId]}>. Customer e-mail: \`${customer.email}\`.`);
+                        }
+                    }
+                }
+                
+                // Now, check if there are any roles in planRoles that the user has but aren't in customer.plans
+                // This handles the case where a plan ID exists in configuration but not in the user's plans object
+                for (const planId in planRoles) {
+                    // Skip if this plan is already tracked in customer.plans
+                    if (customer.plans[planId] !== undefined) continue;
+                    
+                    // Check if this plan is in the active subscriptions
+                    const isActive = activeSubscriptions.some(sub => {
+                        const subPlanId = sub.items.data[0]?.plan.id;
+                        return subPlanId === planId;
+                    });
+                    
+                    if (!isActive) {
+                        // User has the role but not the subscription, remove the role
+                        const roleId = planRoles[planId];
+                        const hasRole = member.roles.cache.has(roleId);
+                        
+                        if (hasRole) {
+                            console.log(`[Account Verification] Removing role for plan ${planId} that user has but isn't tracked: ${customer.email}.`);
+                            member.roles.remove(roleId).catch(() => {});
+                            
+                            // Update the database to explicitly mark this plan as inactive
+                            const planUpdate = {};
+                            planUpdate[`plans.${planId}`] = false;
+                            await collection.updateOne(
+                                { _id: customer._id },
+                                { $set: planUpdate }
+                            );
+                            
+                            // Log the role removal
+                            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member.user.tag}** (${member.id}, <@${member.id}>) lost privileges for untracked plan ${planId}, role <@&${roleId}>. Customer e-mail: \`${customer.email}\`.`);
+                        }
+                    }
+                }
+            }
         }
     }
 }

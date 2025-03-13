@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 
 const stripe_1 = require("../../integrations/stripe");
 const planConfig = require("../../config/plans");
@@ -29,6 +29,7 @@ module.exports = {
             .addComponents(linkButton);
 
         // Send the message with the button
-        await interaction.reply({ embeds: [embed], components: [row] });
+        await interaction.reply({ content: 'Wohoo! Setup button message sent.', flags: "Ephemeral" });
+        await interaction.channel.send({ embeds: [embed], components: [row] });
     }
 };

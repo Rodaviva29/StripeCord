@@ -27,7 +27,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`Hey **${interaction.user.username}**, e-mail address typed is **not valid**. Please make sure you are typing it correctly and try again.`)
                 .setColor('#FD5D5D');
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
             return;
         }
 
@@ -36,7 +36,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail address provided is **already in use** by another member. Use another e-mail or contact our team if you think this is an error.`)
                 .setColor('#FD5D5D');
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
             return;
         }
 
@@ -45,7 +45,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided is **already in use** by yourself. Use another e-mail or contact our team if you think this is an error.`)
                 .setColor('#FD5D5D');
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
             return;
         }
 
@@ -56,7 +56,7 @@ module.exports = {
             .setDescription("We're checking your account status for more information.")
             .setFooter({ text: 'Hold on tight. This may take a few seconds.'});
 
-        await interaction.reply({ embeds: [waitMessage], ephemeral: true });
+        await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
         // Get customer ID from Stripe API
         const customerId = await stripe_1.resolveCustomerIdFromEmail(email);
@@ -66,7 +66,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided doesn't have an account created in Stripe with us. Please buy a subscription through the link: ${process.env.STRIPE_PAYMENT_LINK} to get started. After a successful purchase, you can try again.`)
                 .setColor('#FDDE5D');
-            await interaction.editReply({ embeds: [embed], ephemeral: true });
+            await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
             return;
         }
 
@@ -78,7 +78,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setDescription(`We found your account! But it seems **you don't have an active subscription**. Check your dashboard: ${process.env.STRIPE_PORTAL_LINK} or subscribe through the following link: ${process.env.STRIPE_PAYMENT_LINK} to get started.`)
                 .setColor('#FD5D5D');
-            await interaction.editReply({ embeds: [embed], ephemeral: true });
+            await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
             return;
         }
 
@@ -86,8 +86,17 @@ module.exports = {
         const customer = {
             discordUserID: interaction.user.id,
             email,
-            hadActiveSubscription: true
+            hadActiveSubscription: true,
+            plans: {}
         };
+        
+        // Initialize plan-specific tracking
+        for (const subscription of activeSubscriptions) {
+            const planId = subscription.items.data[0]?.plan.id;
+            if (planId && planConfig.planRoles[planId]) {
+                customer.plans[planId] = true;
+            }
+        }
 
         if (userCustomer) {
             await collection.updateOne({ _id: userCustomer._id }, { $set: customer });
@@ -103,6 +112,9 @@ module.exports = {
             const planRoles = planConfig.planRoles;
             const planRoleEntries = Object.entries(planRoles);
             
+            // Track assigned roles with their IDs for logging
+            let assignedRoleIds = [];
+            
             if (planRoleEntries.length > 0) {
                 // Multi-role mode: assign roles based on subscription plan IDs
                 let assignedRoles = [];
@@ -113,8 +125,10 @@ module.exports = {
                     
                     if (planId && planRoles[planId]) {
                         // If we have a role mapping for this plan, add the role
-                        await member.roles.add(planRoles[planId]);
+                        const roleId = planRoles[planId];
+                        await member.roles.add(roleId);
                         assignedRoles.push(planId);
+                        assignedRoleIds.push(roleId);
                     }
                 }
                 
@@ -122,21 +136,25 @@ module.exports = {
                 // fall back to the default role
                 if (assignedRoles.length === 0 && planConfig.defaultRole) {
                     await member.roles.add(planConfig.defaultRole);
+                    assignedRoleIds.push(planConfig.defaultRole);
                 }
             } else {
                 // Legacy mode: just add the single role defined in .env
                 await member.roles.add(process.env.PAYING_ROLE_ID);
+                assignedRoleIds.push(process.env.PAYING_ROLE_ID);
             }
 
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
-            logsChannel?.send(`:link: **${member.user.tag}** (${member.user.id}, <@${member.user.id}>) linked their account with: \`${customer.email}\`.`);
+            const roleIdsText = assignedRoleIds.length > 0 ? `Roles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}` : 'No roles assigned';
+            logsChannel?.send(`:link: **${member.user.tag}** (${member.user.id}, <@${member.user.id}>) linked their account with: \`${customer.email}\`.\n${roleIdsText}`);
 
             const accessGranted = new EmbedBuilder()
-                .setDescription(`:white_check_mark: | Woohoo! Your account has been **linked successfully** with ${email}.\nNow your Discord privileges are automatically renewed.`)
+                .setDescription(`:white_check_mark: | Woohoo! Your account has been **linked successfully**.\n\nRoles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}`)
+                .setFooter({ text: 'Now your Discord privileges are automatically renewed.'})
                 .setColor('#C4F086');
 
-            await interaction.editReply({ embeds: [accessGranted], ephemeral: true });
+            await interaction.editReply({ embeds: [accessGranted], flags: "Ephemeral" });
         }
     },
 };
