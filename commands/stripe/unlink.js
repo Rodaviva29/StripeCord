@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const planConfig = require("../../config/plans");
 
 module.exports = {
+    cooldown: 7200,
     data: new SlashCommandBuilder()
         .setName(process.env.COMMAND_NAME_UNLINK || 'unlink')
         .setDMPermission(true)
