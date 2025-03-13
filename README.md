@@ -2,14 +2,39 @@
 
 This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
 
-## :warning: IMPORTANT NOTICE
+## :warning: StripeCord V2 BETA RELEASE | IMPORTANT NOTICE
 
 - This is a dev branch, please don't use in production unless you know what you are doing.
 
-### Added features
-- Branch with added support for Discloud Easy Host (discloud.config).
-- Branch with added support for Multiple Roles and Multiple Plans.
-- Branch with added support for Button Command to be able to simulate the /link command.
+### 🛠 Changes & Improvements  
+
+- **Configuration Updates**  
+  - Moved `.env` to `config/` and added two new variables: `CHECK_STATUS` and `COMMAND_NAME_UNLINK`. (Check above for more details.)  
+
+- **Role Management Enhancements**  
+  - Added support for multiple role IDs (configurable). Also includes a fallback for a single role. (New config in `config/plans.js`.)  
+  - Implemented extensive new checks to track multiple roles in the database.  
+  - Improved `dailyCheck.js` function to ensure stability when users switch email accounts (rare scenario).  
+
+- **Subscription Status Handling**  
+  - Added support to determine if roles should be revoked during `past_due` or immediately when the status changes to anything other than `active`.  
+
+- **Hosting & Deployment**  
+  - Added support for Discloud Easy Host Provider (`discloud.config`).  
+
+- **Command Enhancements**  
+  - Introduced a **Button Command** `/button` to simulate the `/link` command.  
+  - Implemented the `/unlink` command with a **2-hour cooldown** to prevent abuse (e.g., users looping between link/unlink).  
+    - Users can now delete their data and roles from the database.  
+    - Allows users to refresh their roles, enabling them to relink if they had previously linked but their roles were outdated.  
+
+- **Dependency & Codebase Updates**  
+  - Updated dependencies and removed unused modules.  
+  - Refactored code to align with the latest `discord.js` syntax.  
+
+### 🧪 Beta Notes  
+- Added numerous test scenarios to ensure system stability.  
+- This is a **tested Beta Version**, not a full release. Breaking errors may occur.
 
 If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
 
