@@ -6,7 +6,7 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 - This is a dev branch, please don't use in production unless you know what you are doing.
 
-### 🛠 Changes & Improvements  
+### 🛠 Changes & Improvements (V2.0)
 
 - **Configuration Updates**  
   - Moved `.env` to `config/` and added two new variables: `CHECK_STATUS` and `COMMAND_NAME_UNLINK`. (Check above for more details.)  
@@ -30,7 +30,23 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 - **Dependency & Codebase Updates**  
   - Updated dependencies and removed unused modules.  
-  - Refactored code to align with the latest `discord.js` syntax.  
+  - Refactored code to align with the latest `discord.js` syntax.
+
+## 🛠 Changes & Improvements (V2.1)
+
+### 🔧 New Features
+- **Added a "Manage Subs" button** (suggested by you).
+- **Implemented `dateUpdate` schema** for a future feature.
+- **New function and command to remove inactive users from the database**: Users inactive for 30 days or more will be removed, improving the efficiency of `dailyChecks` by reducing the number of users being processed.
+
+### 🔄 Role & Subscription Management
+- **Updated `delete-admin` logic**: Now allows the deletion of actively subscribed users. Their roles will be removed upon deletion, whereas before, the system blocked the action with an admin message.
+- **Revamped linking logic (modal and command)**: Users can now resync their roles. Previously, attempting to link an already linked email resulted in an error message. The system now differentiates between a resync and a new link in the logs.
+
+### 🕒 Sync & Execution Improvements
+- **Renamed `dailySync.js` to `permsSync.js`**: More accurately reflects its purpose, as it can be configured to run hourly.
+- **Fixed a misnamed variable in `stripe.js`**: Renamed `oldCustomerId` to `customerId`.
+- **Significant rework of `permsCheck.js`**: Enhanced logic and added extensive logging. The system now logs when a user receives new roles during sync.
 
 ### 🧪 Beta Notes  
 - Added numerous test scenarios to ensure system stability.  
