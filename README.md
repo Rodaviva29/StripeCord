@@ -6,7 +6,7 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 - This is a dev branch, please don't use in production unless you know what you are doing.
 
-### 🛠 Changes & Improvements (V2.0)
+## 🛠 Changes & Improvements (v2.0)
 
 - **Configuration Updates**  
   - Moved `.env` to `config/` and added two new variables: `CHECK_STATUS` and `COMMAND_NAME_UNLINK`. (Check above for more details.)  
@@ -32,11 +32,11 @@ This StripeCord bot is useful to make an easy free integration with those two pl
   - Updated dependencies and removed unused modules.  
   - Refactored code to align with the latest `discord.js` syntax.
 
-## 🛠 Changes & Improvements (V2.1)
+## 🛠 Changes & Improvements (v2.1)
 
 ### 🔧 New Features
-- **Added a "Manage Subs" button** (suggested by you).
-- **Implemented `dateUpdate` schema** for a future feature.
+- **Added a "Manage Subs" button** to the embed command.
+- **Implemented `dateUpdate` parameter** into the DB to support inactivity function.
 - **New function and command to remove inactive users from the database**: Users inactive for 30 days or more will be removed, improving the efficiency of `dailyChecks` by reducing the number of users being processed.
 
 ### 🔄 Role & Subscription Management
@@ -47,6 +47,8 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 - **Renamed `dailySync.js` to `permsSync.js`**: More accurately reflects its purpose, as it can be configured to run hourly.
 - **Fixed a misnamed variable in `stripe.js`**: Renamed `oldCustomerId` to `customerId`.
 - **Significant rework of `permsCheck.js`**: Enhanced logic and added extensive logging. The system now logs when a user receives new roles during sync.
+
+---
 
 ### 🧪 Beta Notes  
 - Added numerous test scenarios to ensure system stability.  
@@ -72,13 +74,8 @@ This project is licensed under the MIT License - check the [LICENSE.md](LICENSE.
 
 ## Acknowledgements
 
-Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
-
-This version is a simplified version with JavaScript instead of TypeScript
-
-**Database Core**: Mongo DB Atlas instead of PostGres to be ready to go!
-
-NOTE: If you want to change the database type to SQL, I can open a branch for you, give me a thumbs up!
+Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot). Converted from TypeScript in JavaScript as I prefer JS.
+**Database Core**: Mongo DB Atlas instead of PostGres to be ready to go! (If you want to change the database type to SQL, I can open a branch for you, give me a thumbs up!)
 
 ---
 
