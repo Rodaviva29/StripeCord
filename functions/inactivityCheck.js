@@ -29,6 +29,14 @@ module.exports = async function InactivityCheck(client, database, thresholdDays 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - inactivityThresholdDays);
     
+    /* Update any users without an updatedAt field (both active and inactive)
+    // Only uncomment this if you were running an older version of the bot (V1 and V2 Betas)
+    await collection.updateMany(
+        { updatedAt: { $exists: false } },
+        { $set: { updatedAt: new Date() } }
+    );
+    */
+    
     // Find inactive users whose updatedAt date is older than the cutoff date
     const inactiveUsers = await collection.find({
         activeSubscribed: false,

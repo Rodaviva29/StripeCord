@@ -40,14 +40,21 @@ module.exports = {
             return;
         }
 
-        // Check if user is trying to use the same email they already have
+        /*
+         * If the user uses the same e-mail that it's database and typed
+         * This is triggered when the user uses the command with an email valid but it's the same saved in DB.
+         * If you want, you can add this code block to deny users to force sync their new roles or renew their past ones. (legacy code)
+        
         if (userCustomer && userCustomer.email && email === userCustomer.email) {
+
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided is **already in use** by yourself. Use another e-mail or contact our team if you think this is an error.`)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
+
             return;
-        }
+
+        }*/
 
         // Waiting message while we check the user's account status
         const waitMessage = new EmbedBuilder()
@@ -148,7 +155,11 @@ module.exports = {
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
             const roleIdsText = assignedRoleIds.length > 0 ? `Roles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}` : 'No roles assigned';
-            logsChannel?.send(`:link: **${member.user.tag}** (${member.user.id}, <@${member.user.id}>) linked their account with: \`${customer.email}\`.\n${roleIdsText}`);
+            if (userCustomer && userCustomer.email && email === userCustomer.email) {
+                logsChannel?.send(`:repeat: **${member.user.tag}** (${member.user.id}, <@${member.user.id}>) used link to resync their account with: \`${customer.email}\`.\n${roleIdsText}`);
+            } else {
+                logsChannel?.send(`:link: **${member.user.tag}** (${member.user.id}, <@${member.user.id}>) linked their account with: \`${customer.email}\`.\n${roleIdsText}`);
+            }
 
             const accessGranted = new EmbedBuilder()
                 .setDescription(`:white_check_mark: | Woohoo! Your account has been **linked successfully**.\n\nRoles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}`)
