@@ -6,6 +6,12 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 
 - This is a dev branch, please don't use in production unless you know what you are doing.
 
+### 🧪 Beta Notes  
+- Added numerous test scenarios to ensure system stability.  
+- This is a **tested Beta Version**, not a full release. Breaking errors may occur.
+
+If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project. Any [Ko-Fis](https://ko-fi.com/rodaviva) given would be greatly welcome to allow me to continue to mantain this project development.
+
 ## 🛠 Changes & Improvements (v2.0)
 
 - **Configuration Updates**  
@@ -49,12 +55,6 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 - **Significant rework of `permsCheck.js`**: Enhanced logic and added extensive logging. The system now logs when a user receives new roles during sync.
 
 ---
-
-### 🧪 Beta Notes  
-- Added numerous test scenarios to ensure system stability.  
-- This is a **tested Beta Version**, not a full release. Breaking errors may occur.
-
-If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
 
 ## Features
 
