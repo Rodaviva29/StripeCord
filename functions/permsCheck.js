@@ -13,9 +13,10 @@ const getExpiredEmbed = (hasSubscriptions = false, roleName = null) => {
 
 const makeMemberExpire = async (customer, member, guild, collection) => {
 
-    // Create update object with hadActiveSubscription set to false
+    // Create update object with activeSubscribed set to false
     const updateObj = {
-        hadActiveSubscription: false
+        activeSubscribed: false,
+        updatedAt: new Date()
     };
     
     // Set all plan-specific flags to false
@@ -58,8 +59,8 @@ const makeMemberExpire = async (customer, member, guild, collection) => {
 
 };
 
-// function to run daily
-module.exports = async function DailyCheck(client) {
+// Hourly, Daily Check to garantee that all users have the correct roles
+module.exports = async function permsCheck(client) {
 
     const database = await client.database
 
@@ -82,13 +83,14 @@ module.exports = async function DailyCheck(client) {
 
             console.log(`[Account Verification] Could not find customer id for ${customer.email}`);
 
-            if (customer.hadActiveSubscription === true) {
+            if (customer.activeSubscribed === true) {
                 await collection.updateOne({ _id: customer._id }, {
                     $set: {
-                        hadActiveSubscription: false
-                    }
-                    
-            });
+                        activeSubscribed: false,
+                        updatedAt: new Date()
+                    }        
+                });
+            }
 
             // If the member is not in the guild, we can't remove the role
             // Log specifically that they left the group and the role was already removed before they left
@@ -100,7 +102,6 @@ module.exports = async function DailyCheck(client) {
             guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
             
         }
-      }
 
         const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
         const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions) || [];
@@ -111,10 +112,11 @@ module.exports = async function DailyCheck(client) {
             
             console.log(`${customer.email} has active subscription(s).`);
 
-            if (!customer.hadActiveSubscription) {
-                // Create update object with hadActiveSubscription set to true
+            if (!customer.activeSubscribed) {
+                // Create update object with activeSubscribed set to true
                 const updateObj = {
-                    hadActiveSubscription: true
+                    activeSubscribed: true,
+                    updatedAt: new Date()
                 };
                 
                 // Initialize plans object if it doesn't exist
@@ -137,19 +139,32 @@ module.exports = async function DailyCheck(client) {
                 if (planRoleEntries.length > 0) {
                     // Multi-role mode: assign roles based on subscription plan IDs
                     let assignedRoles = [];
+                    let newlyAddedRoles = [];
                     
                     for (const subscription of activeSubscriptions) {
                         // Get the plan ID from the subscription
                         const planId = subscription.items.data[0]?.plan.id;
                         
                         if (planId && planRoles[planId]) {
+                            const roleId = planRoles[planId];
+                            // Check if the member already has this role
+                            const hasRole = member.roles.cache.has(roleId);
+                            
                             // If we have a role mapping for this plan, add the role
-                            await member.roles.add(planRoles[planId]);
+                            await member.roles.add(roleId);
                             assignedRoles.push(planId);
+                            
+                            // If the role is newly added, track it for notification
+                            if (!hasRole) {
+                                const role = guild.roles.cache.get(roleId);
+                                const roleName = role ? role.name : null;
+                                newlyAddedRoles.push({ id: roleId, name: roleName, planId });
+                            }
                             
                             // Update the database to track this specific plan
                             const planUpdate = {};
                             planUpdate[`plans.${planId}`] = true;
+                            planUpdate['updatedAt'] = new Date();
                             await collection.updateOne(
                                 { _id: customer._id },
                                 { $set: planUpdate }
@@ -160,7 +175,42 @@ module.exports = async function DailyCheck(client) {
                     // If no plan-specific roles were assigned but we have active subscriptions,
                     // fall back to the default role
                     if (assignedRoles.length === 0 && planConfig.defaultRole) {
+                        const hasDefaultRole = member.roles.cache.has(planConfig.defaultRole);
                         await member.roles.add(planConfig.defaultRole);
+                        
+                        if (!hasDefaultRole) {
+                            const defaultRole = guild.roles.cache.get(planConfig.defaultRole);
+                            const defaultRoleName = defaultRole ? defaultRole.name : null;
+                            newlyAddedRoles.push({ id: planConfig.defaultRole, name: defaultRoleName, planId: 'default' });
+                        }
+                    }
+                    
+                    // If any roles were newly added, send a notification
+                    if (newlyAddedRoles.length > 0) {
+                        // Format the roles for display
+                        const rolesList = newlyAddedRoles.map(role => 
+                            `@${role.name || role.id}`
+                        ).join(', ');
+                        
+                        // Log to the logs channel
+                        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(
+                            `:inbox_tray: **${member.user.tag}** (${member.id}, <@${member.id}>) received new roles: ${rolesList}. Email: \`${customer.email}\`.`
+                        );
+                        
+                        // Optionally notify the user directly
+                        /* try {
+                            const userNotification = new EmbedBuilder()
+                                .setTitle('New roles assigned!')
+                                .setDescription(`You've been assigned the following roles: ${rolesList}.`)
+                                .setColor('#73a3c1')
+                                .setFooter({ text: 'Thank you for your subscription!' });
+                                
+                            await member.send({ embeds: [userNotification] });
+                        } catch (error) {
+                            console.log(`Could not send DM to ${member.user.tag}`);
+                        }
+                        */
+                       
                     }
                 } else {
                     // Legacy mode: just add the single role defined in .env
@@ -169,7 +219,7 @@ module.exports = async function DailyCheck(client) {
             }
         }
 
-        if (!customer.hadActiveSubscription){
+        if (!customer.activeSubscribed){
             console.log(`[Account Verification] Skipping inactive customer: ${customer.email}.`);
             continue;
         }
@@ -177,7 +227,7 @@ module.exports = async function DailyCheck(client) {
         // Check for expired or canceled subscriptions
         // If there are no active subscriptions but the user had them before, handle expiration
         // Also handle the case where all/every subscriptions are 'unpaid'
-        if ((activeSubscriptions.length === 0 || subscriptions.every(sub => sub.status === 'unpaid')) && customer.hadActiveSubscription) {
+        if ((activeSubscriptions.length === 0 || subscriptions.every(sub => sub.status === 'unpaid')) && customer.activeSubscribed) {
             const member = guild.members.cache.get(customer.discordUserID);
             console.log(`[Account Verification] No active subscriptions found for: ${customer.email}.`);
             member?.send({ embeds: [getExpiredEmbed()] }).catch(() => {});
@@ -215,6 +265,7 @@ module.exports = async function DailyCheck(client) {
                             // Update the database to mark this plan as inactive
                             const planUpdate = {};
                             planUpdate[`plans.${planId}`] = false;
+                            planUpdate['updatedAt'] = new Date();
                             await collection.updateOne(
                                 { _id: customer._id },
                                 { $set: planUpdate }
@@ -257,6 +308,7 @@ module.exports = async function DailyCheck(client) {
                             // Update the database to explicitly mark this plan as inactive
                             const planUpdate = {};
                             planUpdate[`plans.${planId}`] = false;
+                            planUpdate['updatedAt'] = new Date();
                             await collection.updateOne(
                                 { _id: customer._id },
                                 { $set: planUpdate }

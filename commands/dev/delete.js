@@ -40,12 +40,6 @@ module.exports = {
                 return;
             }
 
-            if (userCustomer.hadActiveSubscription) {
-                interaction.reply({ content: `❌ | It is not possible to remove the user. There is still an active subscription at **${userCustomer.email}**.`, flags: "Ephemeral" });
-                return;
-            }
-            
-
             const embed = new EmbedBuilder()
                 .setAuthor({ name: `Account found: ${customer_discord?.tag || 'Unknown Account'}`, iconURL: 'https://cdn.discordapp.com/emojis/1124730815901868133.webp?size=160&quality=lossless'})
                 .setDescription(`> Member: **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>)\n> Email: \`${userCustomer.email}\`.`)
@@ -80,6 +74,30 @@ module.exports = {
                 buttonClicked = true;
 
                 if (buttonInteraction.customId === 'confirmDelete') {
+
+                    if (userCustomer.activeSubscribed) {
+
+                        // Legacy version of the flow
+                        // interaction.reply({ content: `❌ | It is not possible to remove the user. There is still an active subscription at **${userCustomer.email}**.`, flags: "Ephemeral" });
+                        // return;
+        
+                        // Remove the default role if it exists
+                        if (planConfig.defaultRole) {
+                            await member.roles.remove(planConfig.defaultRole).catch(() => {});
+                        }
+                        
+                        // Remove any plan-specific roles
+                        const planRoleIds = Object.values(planConfig.planRoles);
+                        if (planRoleIds.length > 0) {
+                            for (const roleId of planRoleIds) {
+                                await member.roles.remove(roleId).catch(() => {});
+                            }
+                        } else {
+                            // Legacy mode - remove the single role defined in .env
+                            await member.roles.remove(process.env.PAYING_ROLE_ID).catch(() => {});
+                        }
+                    }
+                    
                     await collection.deleteOne({ discordUserID: customer_discord.id });
                     await buttonInteraction.update({ content: `The account of **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with the e-mail address: \`${userCustomer.email}\` was **successfully dropped**!`, components: [], embeds: [] });
                     await logsChannel?.send(`:asterisk: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) deleted **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) Account with the e-mail address: \`${userCustomer.email}\`.`);

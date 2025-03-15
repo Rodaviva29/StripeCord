@@ -24,9 +24,16 @@ module.exports = {
             .setLabel('Link Stripe Account')
             .setStyle(ButtonStyle.Primary);
 
-        // Add the button to an action row
+        // Create subscriptions portal button
+        const portalButton = new ButtonBuilder()
+           .setCustomId('stripe_portal_button')
+           .setLabel('Manage Subscriptions')
+           .setStyle(ButtonStyle.Link)
+           .setURL(`${process.env.STRIPE_PORTAL_LINK}`);
+
+        // Add the buttons to an action row
         const row = new ActionRowBuilder()
-            .addComponents(linkButton);
+            .addComponents(linkButton, portalButton);
 
         // Send the message with the button
         await interaction.reply({ content: 'Wohoo! Setup button message sent.', flags: "Ephemeral" });

@@ -14,7 +14,7 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 - **Role Management Enhancements**  
   - Added support for multiple role IDs (configurable). Also includes a fallback for a single role. (New config in `config/plans.js`.)  
   - Implemented extensive new checks to track multiple roles in the database.  
-  - Improved `dailyCheck.js` function to ensure stability when users switch email accounts (rare scenario).  
+  - Improved `permsCheck.js` function to ensure stability when users switch email accounts (rare scenario).  
 
 - **Subscription Status Handling**  
   - Added support to determine if roles should be revoked during `past_due` or immediately when the status changes to anything other than `active`.  

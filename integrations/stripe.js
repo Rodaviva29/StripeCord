@@ -44,13 +44,13 @@ exports.resolveCustomerIdFromEmail = resolveCustomerIdFromEmail;
 /**
  * Gets all the Stripe subscriptions from a given customer ID
  */
-const findSubscriptionsFromCustomerId = async (oldCustomerId) => {
+const findSubscriptionsFromCustomerId = async (customerId) => {
     await sleep(2000); // 2-second delay
 
     // Build URL based on CHECK_STATUS
     const url = process.env.CHECK_STATUS === "active" 
-    ? `https://api.stripe.com/v1/subscriptions?customer=${oldCustomerId}&status=active`
-    : `https://api.stripe.com/v1/subscriptions?customer=${oldCustomerId}`;
+    ? `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active`
+    : `https://api.stripe.com/v1/subscriptions?customer=${customerId}`;
 
     const response = await fetch(url, {
         method: 'GET',

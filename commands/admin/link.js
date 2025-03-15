@@ -147,8 +147,9 @@ module.exports = {
         const customer = {
             discordUserID: customer_discord.id,
             email,
-            hadActiveSubscription: true,
-            plans: {}
+            activeSubscribed: true,
+            plans: {},
+            updatedAt: new Date()
         };
         
         // Initialize plan-specific tracking
