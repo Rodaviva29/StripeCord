@@ -46,13 +46,8 @@ exports.resolveCustomerIdFromEmail = resolveCustomerIdFromEmail;
  */
 const findSubscriptionsFromCustomerId = async (customerId) => {
     await sleep(2000); // 2-second delay
-
-    // Build URL based on CHECK_STATUS
-    const url = process.env.CHECK_STATUS === "active" 
-    ? `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active`
-    : `https://api.stripe.com/v1/subscriptions?customer=${customerId}`;
-
-    const response = await fetch(url, {
+    
+    const response = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${customerId}`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${process.env.STRIPE_API_KEY}`
@@ -64,11 +59,15 @@ const findSubscriptionsFromCustomerId = async (customerId) => {
 }
 exports.findSubscriptionsFromCustomerId = findSubscriptionsFromCustomerId;
 
-
 /**
  * Filter the active subscriptions from a list of subscriptions
  */
 const findActiveSubscriptions = (subscriptions) => {
-    return subscriptions.filter(sub => sub.status === 'active' || sub.status === 'trialing' || (sub.cancel_at && sub.current_period_end > Date.now() / 1000));
+    // Build Filter based on CHECK_STATUS
+    return subscriptions.filter(sub => 
+        process.env.CHECK_STATUS === "active"
+            ? sub.status === 'active' || sub.status === 'trialing' || (sub.cancel_at && sub.current_period_end > Date.now() / 1000)
+            : sub.status === 'past_due' || sub.status === 'active' || sub.status === 'trialing' || (sub.cancel_at && sub.current_period_end > Date.now() / 1000)
+    );
 }
 exports.findActiveSubscriptions = findActiveSubscriptions;
