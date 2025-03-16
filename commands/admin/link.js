@@ -3,20 +3,23 @@ const { SlashCommandBuilder, EmbedBuilder, TextInputStyle, ActionRowBuilder, But
 const stripe_1 = require("../../integrations/stripe");
 const planConfig = require("../../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName(process.env.COMMAND_NAME_ADMIN_LINK)
         .setDMPermission(false)
-        .setDescription('Link your Stripe Account E-mail with your Discord Account.')
+        .setDescription(lang.commands.admin.link.slashCommandDescription)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .addUserOption(option =>
             option.setName('member')
-                .setDescription('Force link a member to a certain E-mail.')
+                .setDescription(lang.commands.admin.link.slashCommandUserOption)
                 .setRequired(true)
         )
         .addStringOption(option =>
             option.setName('email')
-                .setDescription("Enter customer's Stripe Account E-mail.")
+                .setDescription(lang.commands.admin.link.slashCommandStringOption)
                 .setRequired(true)
         ),
 
@@ -47,8 +50,10 @@ module.exports = {
          */
         if (!emailRegex.test(email)) {
 
+            const emailRegexDescription = lang.commands.admin.link.embedEmailRegexDescription.replace('{username}', interaction.user.username);
+            
             const embed = new EmbedBuilder()
-                .setDescription(`Hey **${interaction.user.username}**, e-mail address typed is **not valid**. Please make sure you are typing it correctly and execute this command again.`)
+                .setDescription(emailRegexDescription)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
 
@@ -64,7 +69,7 @@ module.exports = {
         if (existingEmailCustomer) {
 
             const embed = new EmbedBuilder()
-                .setDescription(`The e-mail address provided is **already in use** by another member. Use another e-mail or check your Database if you think this is an error.`)
+                .setDescription(lang.commands.admin.link.embedExistingEmailCustomerDescription)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
 
@@ -78,8 +83,10 @@ module.exports = {
          */
         if (userCustomer && userCustomer.email && email === userCustomer.email) {
 
+            const sameEmailDescription = lang.commands.admin.link.embedSameEmailDescription.replace('{customer_tag}', customer_discord.tag);
+            
             const embed = new EmbedBuilder()
-                .setDescription(`The e-mail provided is **already in use** by the customer himself (${customer_discord.tag}). Use another e-mail or check your Database if you think this is an error.`)
+                .setDescription(sameEmailDescription)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
 
@@ -89,11 +96,13 @@ module.exports = {
 
 
         // Waiting message while we check the user's account status.
+        const waitMessageDescription = lang.commands.admin.link.embedWaitMessageDescription.replace('{customer_tag}', customer_discord.tag);
+        
         const waitMessage = new EmbedBuilder()
         .setColor("#2B2D31")
         .setThumbnail("https://cdn.discordapp.com/emojis/653399136737165323.gif?v=1")
-        .setDescription(`Were checking ${customer_discord.tag} account status for more information.`)
-        .setFooter({ text: 'Hold on tight. This may take a few seconds.'});
+        .setDescription(waitMessageDescription)
+        .setFooter({ text: lang.commands.admin.link.embedWaitMessageFooter});
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
@@ -107,8 +116,11 @@ module.exports = {
          */
         if (!customerId) {
 
+            const noCustomerIdDescription = lang.commands.admin.link.embedNoCustomerIdDescription
+                .replace('{email}', email);
+
             const embed = new EmbedBuilder()
-                .setDescription(`The e-mail provided (${email}) doesn't have an account created in Stripe with us. Please check if your customer already bought a subscription through the link: ${process.env.STRIPE_PAYMENT_LINK} to get started. After a successful purchase, you can use execute this command again.`)
+                .setDescription(noCustomerIdDescription)
                 .setColor('#FDDE5D');
             await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
 
@@ -128,8 +140,11 @@ module.exports = {
          */
         if (!(activeSubscriptions.length > 0)) {
 
+            const noActiveSubscriptionDescription = lang.commands.admin.link.embedNoActiveSubscriptionDescription
+                .replace('{email}', email);
+                
             const embed = new EmbedBuilder()
-                .setDescription(`We found the customer account with the specified e-mail. (${email}) But it seems the **customer don't have an active subscription**. Double Check Stripe Admin Panel if you think this is an error.`)
+                .setDescription(noActiveSubscriptionDescription)
                 .setColor('#FD5D5D');
             await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
 
@@ -199,13 +214,6 @@ module.exports = {
                         assignedRoleIds.push(roleId);
                     }
                 }
-                
-                // If no plan-specific roles were assigned but we have active subscriptions,
-                // fall back to the default role
-                if (assignedRoles.length === 0 && planConfig.defaultRole) {
-                    await member.roles.add(planConfig.defaultRole);
-                    assignedRoleIds.push(planConfig.defaultRole);
-                }
             } else {
                 // Legacy mode: just add the single role defined in .env
                 await member.roles.add(process.env.PAYING_ROLE_ID);
@@ -214,15 +222,35 @@ module.exports = {
 
             // Log the event in the logs channel
             const logsChannel = member.guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
-            const roleIdsText = assignedRoleIds.length > 0 ? `Roles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}` : 'No roles assigned';
-            logsChannel?.send(`:asterisk: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) linked **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with: \`${customer.email}\`.\n${roleIdsText}`);
+            
+            // Format role IDs for display
+            const roleIdsText = assignedRoleIds.length > 0 ? 
+                lang.commands.admin.link.logsAssignedRolesMap.replace('{assigned_roles}', assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')) : 
+                lang.commands.admin.link.logsNoAssignedRolesMap;
+            
+            // Format log message with all dynamic variables
+            const logMessage = lang.commands.admin.link.logsLinkedAccount
+                .replace('{admin_tag}', admin.user?.tag || 'Unknown Account')
+                .replace('{admin_id}', admin.user?.id)
+                .replace('{customer_tag}', customer_discord?.tag || 'Unknown Account')
+                .replace('{member_id}', member.user?.id)
+                .replace('{customer_email}', customer.email)
+                .replace('{roles_text}', roleIdsText);
+                
+            logsChannel.send(logMessage);
 
-            const acessGranted = new EmbedBuilder()
-                .setDescription(`:white_check_mark: | Woohoo! **${member.user?.tag || 'Unknown Account'}** account has been **linked successfully** with ${email}.\nNow the customer Discord privileges are automatically renewed.\n\nRoles assigned: ${assignedRoleIds.map(id => `<@&${id}> (${id})`).join(', ')}`)
+            // Format success message with all dynamic variables
+            const accessGrantedDescription = lang.commands.admin.link.embedAccessGrantedDescription
+                .replace('{member_tag}', member.user?.tag || 'Unknown Account')
+                .replace('{email}', email)
+                .replace('{roles_text}', roleIdsText);
+
+            const accessGranted = new EmbedBuilder()
+                .setDescription(accessGrantedDescription)
                 .setColor('#C4F086');
 
             // Send the success message to the user who used the command in flags: "Ephemeral" mode
-            await interaction.editReply({ embeds: [acessGranted], flags: "Ephemeral" });
+            await interaction.editReply({ embeds: [accessGranted], flags: "Ephemeral" });
         }
     }
 };

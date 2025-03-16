@@ -11,25 +11,25 @@ module.exports = {
         .setName(process.env.COMMAND_NAME_BUTTON)
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .setDescription('Send a message with a button to link your Stripe account.'),
+        .setDescription(lang.commands.admin.button.slashCommandDescription),
 
     async execute(client, interaction) {
         // Create the embed message
         const embed = new EmbedBuilder()
-            .setTitle(lang.subscription.accountLinking)
-            .setDescription(lang.subscription.linkDescription)
+            .setTitle(lang.commands.admin.button.embedTitle)
+            .setDescription(lang.commands.admin.button.embedDescription)
             .setColor('#73a3c1')
-            .setFooter({ text: lang.subscription.linkButtonFooter });
+            .setFooter({ text: lang.commands.admin.button.embedFooter });
 
         // Create the button
         const linkButton = new ButtonBuilder()
             .setCustomId('stripe_link_button')
-            .setLabel(lang.buttons.linkStripeAccount)
+            .setLabel(lang.commands.admin.button.buttonLinkLabel)
             .setStyle(ButtonStyle.Primary);
 
         // Create subscriptions portal button
         const portalButton = new ButtonBuilder()
-           .setLabel(lang.buttons.manageSubscriptions)
+           .setLabel(lang.commands.admin.button.buttonPortalLabel)
            .setStyle(ButtonStyle.Link)
            .setURL(`${process.env.STRIPE_PORTAL_LINK}`);
 
@@ -38,7 +38,7 @@ module.exports = {
             .addComponents(linkButton, portalButton);
 
         // Send the message with the button
-        await interaction.reply({ content: lang.commands.button.success, flags: "Ephemeral" });
+        await interaction.reply({ content: lang.commands.admin.button.slashCommandInteraction, flags: "Ephemeral" });
         await interaction.channel.send({ embeds: [embed], components: [row] });
     }
 };

@@ -73,11 +73,6 @@ module.exports = {
                     const member = await guild?.members.fetch(interaction.user.id).catch(() => null);
                     
                     if (member) {
-                        // Remove the default role if it exists
-                        if (planConfig.defaultRole) {
-                            await member.roles.remove(planConfig.defaultRole).catch(() => {});
-                        }
-                        
                         // Remove any plan-specific roles
                         const planRoleIds = Object.values(planConfig.planRoles);
                         if (planRoleIds.length > 0) {

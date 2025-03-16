@@ -82,11 +82,6 @@ module.exports = {
                         // Legacy version of the flow
                         // interaction.reply({ content: `❌ | It is not possible to remove the user. There is still an active subscription at **${userCustomer.email}**.`, flags: "Ephemeral" });
                         // return;
-        
-                        // Remove the default role if it exists
-                        if (planConfig.defaultRole) {
-                            await member.roles.remove(planConfig.defaultRole).catch(() => {});
-                        }
                         
                         // Remove any plan-specific roles
                         const planRoleIds = Object.values(planConfig.planRoles);

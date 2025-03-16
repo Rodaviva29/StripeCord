@@ -139,13 +139,6 @@ module.exports = {
                         assignedRoleIds.push(roleId);
                     }
                 }
-                
-                // If no plan-specific roles were assigned but we have active subscriptions,
-                // fall back to the default role
-                if (assignedRoles.length === 0 && planConfig.defaultRole) {
-                    await member.roles.add(planConfig.defaultRole);
-                    assignedRoleIds.push(planConfig.defaultRole);
-                }
             } else {
                 // Legacy mode: just add the single role defined in .env
                 await member.roles.add(process.env.PAYING_ROLE_ID);

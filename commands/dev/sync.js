@@ -13,8 +13,13 @@ module.exports = {
         .setDescription('Manually trigger the daily check.'),
 
     async execute(client, interaction, database) {
-        console.log("Manually triggering daily check...");
+        console.log("Manually triggering perms (and if active safety) checks...");
+
+        // Run permissions check to add or remove roles from users in DB
         permsCheck(client, database);
+        
+        // Run safety check to remove unauthorized role holders without DB entry
+        safetyCheck(client, database);
 
         await interaction.reply({ content: "🔄 | Stripe check **triggered**!\n\n⚠️ Please don't use this command more than __once an hour or two__.", flags: "Ephemeral" });
     },
