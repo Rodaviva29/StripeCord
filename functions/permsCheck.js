@@ -286,6 +286,16 @@ module.exports = async function permsCheck(client) {
                 
                 // Now, check if there are any roles in planRoles that the user has but aren't in customer.plans
                 // This handles the case where a plan ID exists in configuration but not in the user's plans object
+                
+                // First, collect all role IDs that should be active based on active subscriptions
+                const activeRoleIds = new Set();
+                for (const subscription of activeSubscriptions) {
+                    const subPlanId = subscription.items.data[0]?.plan.id;
+                    if (subPlanId && planRoles[subPlanId]) {
+                        activeRoleIds.add(planRoles[subPlanId]);
+                    }
+                }
+                
                 for (const planId in planRoles) {
                     // Skip if this plan is already tracked in customer.plans
                     if (customer.plans[planId] !== undefined) continue;
@@ -297,11 +307,12 @@ module.exports = async function permsCheck(client) {
                     });
                     
                     if (!isActive) {
-                        // User has the role but not the subscription, remove the role
+                        // User has the role but not the subscription
                         const roleId = planRoles[planId];
                         const hasRole = member.roles.cache.has(roleId);
                         
-                        if (hasRole) {
+                        // Only remove the role if it's not granted by any other active subscription
+                        if (hasRole && !activeRoleIds.has(roleId)) {
                             console.log(`[Account Verification] Removing role for plan ${planId} that user has but isn't tracked: ${customer.email}.`);
                             member.roles.remove(roleId).catch(() => {});
                             
