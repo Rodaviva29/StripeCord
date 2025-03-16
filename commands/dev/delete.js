@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, PermissionFlagsBits } = require('discord.js');
 
+const planConfig = require("../../config/plans");
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName(process.env.COMMAND_NAME_ADMIN_DROP)
