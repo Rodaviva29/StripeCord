@@ -3,6 +3,9 @@ const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRow
 const stripe_1 = require("../../integrations/stripe");
 const planConfig = require("../../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName(process.env.COMMAND_NAME_BUTTON)
@@ -13,21 +16,20 @@ module.exports = {
     async execute(client, interaction) {
         // Create the embed message
         const embed = new EmbedBuilder()
-            .setTitle(`${process.env.SUBSCRIPTION_NAME} - Account Linking`)
-            .setDescription(`Click the button below to link your Stripe account email with your Discord account.\n\nThis will give you access to subscriber-only content and features.`)
+            .setTitle(lang.subscription.accountLinking)
+            .setDescription(lang.subscription.linkDescription)
             .setColor('#73a3c1')
-            .setFooter({ text: 'You can also use the /link command directly with your email.' });
+            .setFooter({ text: lang.subscription.linkButtonFooter });
 
         // Create the button
         const linkButton = new ButtonBuilder()
             .setCustomId('stripe_link_button')
-            .setLabel('Link Stripe Account')
+            .setLabel(lang.buttons.linkStripeAccount)
             .setStyle(ButtonStyle.Primary);
 
         // Create subscriptions portal button
         const portalButton = new ButtonBuilder()
-           .setCustomId('stripe_portal_button')
-           .setLabel('Manage Subscriptions')
+           .setLabel(lang.buttons.manageSubscriptions)
            .setStyle(ButtonStyle.Link)
            .setURL(`${process.env.STRIPE_PORTAL_LINK}`);
 
@@ -36,7 +38,7 @@ module.exports = {
             .addComponents(linkButton, portalButton);
 
         // Send the message with the button
-        await interaction.reply({ content: 'Wohoo! Setup button message sent.', flags: "Ephemeral" });
+        await interaction.reply({ content: lang.commands.button.success, flags: "Ephemeral" });
         await interaction.channel.send({ embeds: [embed], components: [row] });
     }
 };
