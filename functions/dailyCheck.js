@@ -69,7 +69,7 @@ module.exports = async function DailyCheck(client) {
             // Log specifically that they left the group and the role was already removed before they left
             if (!member) {
                 guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:**: **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) __left the group__ and has an Email that is not being recognized. Email: \`${customer.email}\`.`); 
-                return;
+                continue;
             }
 
             guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
