@@ -14,29 +14,30 @@ If anyone would like to help the project, I would be grateful if you could make 
 
 ## 🛠 Changes & Improvements (v2.0)
 
-- **Configuration Updates**  
-  - Moved `.env` to `config/` and added two new variables: `CHECK_STATUS` and `COMMAND_NAME_UNLINK`. (Check above for more details.)  
+### 🔧 Configuration Updates
+- **Relocated `.env` file**: Moved to the `config/` folder for better organization.
+- **Added new environment variables**: Introduced `CHECK_STATUS` and `COMMAND_NAME_UNLINK` to provide more control over subscription status checks and unlink command customization. (See documentation above for usage.)
 
-- **Role Management Enhancements**  
-  - Added support for multiple role IDs (configurable). Also includes a fallback for a single role. (New config in `config/plans.js`.)  
-  - Implemented extensive new checks to track multiple roles in the database.  
-  - Improved `permsCheck.js` function to ensure stability when users switch email accounts (rare scenario).  
+### 🔄 Role & Subscription Management
+- **Support for multiple role IDs**: System now supports multiple Discord role IDs per plan, configurable via `config/plans.js`. Also includes fallback logic for single-role setups.
+- **Enhanced database tracking for roles**: Implemented new checks to accurately track multiple roles assigned to users in the database.
+- **Improved handling of email switches**: Updated `permsCheck.js` to ensure correct role synchronization even in rare cases where users switch email accounts.
 
-- **Subscription Status Handling**  
-  - Added support to determine if roles should be revoked during `past_due` or immediately when the status changes to anything other than `active`.  
+### 🕒 Subscription Status Handling
+- **Flexible status-based role revocation**: Added support to control whether roles are revoked when a subscription is marked as `past_due` or any non-`active` status, configurable via `CHECK_STATUS`.
 
-- **Hosting & Deployment**  
-  - Added support for Discloud Easy Host Provider (`discloud.config`).  
+### 🚀 Hosting & Deployment
+- **Discloud Easy Host integration**: Added support for Discloud deployment using `discloud.config` file.
 
-- **Command Enhancements**  
-  - Introduced a **Button Command** `/button` to simulate the `/link` command.  
-  - Implemented the `/unlink` command with a **2-hour cooldown** to prevent abuse (e.g., users looping between link/unlink).  
-    - Users can now delete their data and roles from the database.  
-    - Allows users to refresh their roles, enabling them to relink if they had previously linked but their roles were outdated.  
+### 💬 Command Enhancements
+- **New `/button` command**: Simulates the `/link` command using a button for quicker role linking.
+- **Implemented `/unlink` command with cooldown**: Introduced a **2-hour cooldown** to prevent abuse (e.g., users rapidly linking/unlinking). The command allows:
+  - Users to delete their data and roles from the database.
+  - Users to refresh roles and relink accounts in case of outdated links.
 
-- **Dependency & Codebase Updates**  
-  - Updated dependencies and removed unused modules.  
-  - Refactored code to align with the latest `discord.js` syntax.
+### 🧰 Dependency & Codebase Updates
+- **Updated dependencies**: Removed unused modules and updated existing ones to the latest stable versions.
+- **Codebase refactor**: Aligned all modules with the latest `discord.js` syntax for better stability and maintainability.
 
 ## 🛠 Changes & Improvements (v2.1)
 
@@ -53,6 +54,28 @@ If anyone would like to help the project, I would be grateful if you could make 
 - **Renamed `dailySync.js` to `permsSync.js`**: More accurately reflects its purpose, as it can be configured to run hourly.
 - **Fixed a misnamed variable in `stripe.js`**: Renamed `oldCustomerId` to `customerId`.
 - **Significant rework of `permsCheck.js`**: Enhanced logic and added extensive logging. The system now logs when a user receives new roles during sync.
+
+## 🛠 Changes & Improvements (v2.2)
+
+### 🔧 New Features
+- **Support for multiple `customer_ids` per email**: The integration with `stripe.js` was restructured to return all associated `customer_ids` instead of only the first one. Implemented `Promise.all` to fetch subscriptions for all `customer_ids` linked to the same email, improving accuracy.
+- **Introduced `safetyMode` feature**: Optional verification controlled via the `.env` file. When enabled, the system checks all members holding any role defined in `plans.js` (or the role specified in the environment file). If a member is not found in the database, their roles will be revoked as a security measure.
+- **Translation system preparation**: System updated to support multiple languages. Starting from v2.3, all texts will be managed in `config/lang/en.js` or respective language files, making localization and updates easier.
+
+### 🔄 Role & Subscription Management
+- **Improved handling of multiple roles per plan**: Fixed an issue introduced in v2.1 where users with two or more plans sharing the same Discord role ID would lose the role unless they held *all* matching plans. Now, the system correctly checks if the user has at least one valid plan before removing the role.
+- **Correct behavior when single-role mode is disabled**: The system now properly handles multiple roles when `plans.js`'s single-role mode is off.
+
+### 🕒 Sync & Execution Improvements
+- **Refactored permission synchronization logic**: Major rewrite of the `permsCheck.js` script. Critical issues fixed, such as using `return` inside loops (now correctly replaced by `continue` where appropriate). Added early validation to check if the member still exists in the guild — if not, the user is removed from the database. Additionally, any user marked as having no active subscription in the DB will always have their roles removed for safety.
+- **Updated environment variable defaults**: The default value of `CHECK_STATUS` has been changed from `past_due` to `active`, ensuring roles are revoked when a user's payment is overdue.
+- **Fixed filter placement for `CHECK_STATUS`**: The status filter is now correctly applied in the intended function, improving logic consistency.
+
+### 🐛 Bug Fixes
+- **Fixed import in `dev/delete.js` command**: `planConfig` was missing and is now properly imported.
+- **Resolved issue in linking logic logs**: The system now correctly logs whether a user is performing a new link or simply resyncing their roles.
+- **General code improvements**: Minor bug fixes and code optimization across various modules.
+
 
 ---
 
