@@ -18,6 +18,8 @@ If anyone would like to help the project, I would be grateful if you could make 
 
 Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project and to see all the awesome features.
 
+⭐ **Cloud Hosted Free configuration available** within minutes and Self Hosted configuration for the geeks.
+
 ## Acknowledgements
 
 Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
