@@ -50,10 +50,23 @@ module.exports = async function DailyCheck(client) {
 
         console.log(`[Account Verification] Checking: ${customer.email}`);
         const customerId = await stripe_1.resolveCustomerIdFromEmail(customer.email);
+        const member = guild.members.cache.get(customer.discordUserID);
+
+        // If member is not in the guild, delete them from the database
+        if (!member) {
+            console.log(`[Account Verification] Customer not in the guild: ${customer.email}. Deleting from database.`);
+            
+            // Delete the customer from the database
+            await collection.deleteOne({ _id: customer._id });
+            
+            // Log the deletion to the logs channel
+            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:outbox_tray: Customer with email \`${customer.email}\` (ID: ${customer.discordUserID}, <@${customer.discordUserID}>) was removed from the database because they left the server.`);                
+            console.log(`[Account Verification] Successfully deleted customer: ${customer.email} from database.`);
+
+            continue;
+        }
 
         if (!customerId) {
-
-            const member = guild.members.cache.get(customer.discordUserID);
 
             console.log(`[Account Verification] Could not find customer id for ${customer.email}`);
 
