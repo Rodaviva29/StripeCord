@@ -22,7 +22,7 @@ Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to
 
 ## Acknowledgements
 
-Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
+> Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
 
 This version uses JavaScript instead of TypeScript and noSQL (MongoDB) instead of SQL. 
 - Want to switch to SQL? Just give me a thumbs up and I’ll create a branch for you!
