@@ -40,7 +40,7 @@ const makeMemberExpire = async (customer, member, guild, collection) => {
     }
     
     await collection.updateOne(
-        { discordUserID: customer.discordUserID },
+        { discordId: customer.discordId },
         {
             $set: updateObj
         }
@@ -69,7 +69,7 @@ module.exports = async function permsCheck(client) {
         if (!customer.email) continue;
 
         console.log(`[Account Verification] Checking: ${customer.email}`);
-        const member = guild.members.cache.get(customer.discordUserID);
+        const member = guild.members.cache.get(customer.discordId);
 
         // If member is not in the guild, delete them from the database
         if (!member) {
@@ -79,7 +79,7 @@ module.exports = async function permsCheck(client) {
             await collection.deleteOne({ _id: customer._id });
             
             // Log the deletion to the logs channel
-            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:outbox_tray: Customer with email \`${customer.email}\` (ID: ${customer.discordUserID}, <@${customer.discordUserID}>) was removed from the database because they left the server.`);                
+            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:outbox_tray: Customer with email \`${customer.email}\` (ID: ${customer.discordId}, <@${customer.discordId}>) was removed from the database because they left the server.`);                
             console.log(`[Account Verification] Successfully deleted customer: ${customer.email} from database.`);
 
             continue;
@@ -92,7 +92,7 @@ module.exports = async function permsCheck(client) {
             console.log(`[Account Verification] Could not find any customer ids for ${customer.email}`);
 
             if (customer.activeSubscribed === true) {
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordId}, <@${customer.discordId}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
             }
 
             if (customer.activeSubscribed === false) {
@@ -142,7 +142,7 @@ module.exports = async function permsCheck(client) {
                     $set: updateObj
                 });
 
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member?.id || customer.discordUserID}, <@${member?.id || customer.discordUserID}>) had accesses added again. Email: \`${customer.email}\`.`); 
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member?.id || customer.discordId}, <@${member?.id || customer.discordId}>) had accesses added again. Email: \`${customer.email}\`.`); 
             }
 
             // Check if we have plan-specific role mappings

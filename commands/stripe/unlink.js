@@ -15,7 +15,7 @@ module.exports = {
         try {
             // Find the user in the database
             const userCustomer = await collection.findOne({ 
-                discordUserID: interaction.user.id
+                discordId: interaction.user.id
             });
             
             // If the user is not in the database, let them know
@@ -66,7 +66,7 @@ module.exports = {
 
                 if (buttonInteraction.customId === 'confirmUnlink') {
                     // Delete user from database
-                    await collection.deleteOne({ discordUserID: interaction.user.id });
+                    await collection.deleteOne({ discordId: interaction.user.id });
                     
                     // Get member object to remove roles
                     const guild = client.guilds.cache.get(process.env.GUILD_ID);

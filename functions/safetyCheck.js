@@ -66,7 +66,7 @@ module.exports = async function safetyCheck(client) {
             processedMembers++;
             
             // Check if member is in the database
-            const userInDb = await collection.findOne({ discordUserID: memberId });
+            const userInDb = await collection.findOne({ discordId: memberId });
             
             if (!userInDb) {
                 // User has roles but is not in the database - unauthorized access

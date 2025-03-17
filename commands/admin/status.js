@@ -28,7 +28,7 @@ module.exports = {
         const collection = discordDB.collection(process.env.DATABASE_COLLECTION_NAME);
 
         const discordCustomer = await collection.findOne({ 
-            discordUserID : user.id
+            discordId : user.id
         });
 
 

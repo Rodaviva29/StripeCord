@@ -34,7 +34,7 @@ module.exports = {
         try {
 
             const userCustomer = await collection.findOne({ 
-                discordUserID: customer_discord.id
+                discordId: customer_discord.id
             });
     
             if (!userCustomer) {
@@ -95,7 +95,7 @@ module.exports = {
                         }
                     }
                     
-                    await collection.deleteOne({ discordUserID: customer_discord.id });
+                    await collection.deleteOne({ discordId: customer_discord.id });
                     await buttonInteraction.update({ content: `The account of **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with the e-mail address: \`${userCustomer.email}\` was **successfully dropped**!`, components: [], embeds: [] });
                     await logsChannel?.send(`:asterisk: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) deleted **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) Account with the e-mail address: \`${userCustomer.email}\`.`);
 

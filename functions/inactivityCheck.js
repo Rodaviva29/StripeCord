@@ -51,8 +51,8 @@ module.exports = async function InactivityCheck(client, database, thresholdDays 
     
     // Log the inactive users
     const usersInfo = inactiveUsers.map(user => ({
-        id: user.discordUserID,
-        mention: `<@${user.discordUserID}>`,
+        id: user.discordId,
+        mention: `<@${user.discordId}>`,
         email: user.email || 'No email',
         inactiveDays: Math.floor((new Date() - user.updatedAt) / (1000 * 60 * 60 * 24))
     }));

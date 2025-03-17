@@ -35,12 +35,12 @@ module.exports = {
         const collection = discordDB.collection(process.env.DATABASE_COLLECTION_NAME);
 
         const userCustomer = await collection.findOne({ 
-            discordUserID: customer_discord.id
+            discordId: customer_discord.id
         });
 
         const existingEmailCustomer = await collection.findOne({
             email,
-            discordUserID: { $ne: customer_discord.id }
+            discordId: { $ne: customer_discord.id }
         });
         
 
@@ -165,7 +165,7 @@ module.exports = {
          * Track individual subscription plans
          */
         const customer = {
-            discordUserID: customer_discord.id,
+            discordId: customer_discord.id,
             email,
             activeSubscribed: true,
             plans: {},

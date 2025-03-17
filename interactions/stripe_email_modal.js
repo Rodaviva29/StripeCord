@@ -14,12 +14,12 @@ module.exports = {
         const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
         const userCustomer = await collection.findOne({ 
-            discordUserID: interaction.user.id
+            discordId: interaction.user.id
         });
 
         const existingEmailCustomer = await collection.findOne({
             email,
-            discordUserID: { $ne: interaction.user.id }
+            discordId: { $ne: interaction.user.id }
         });
 
         // Email validation
@@ -98,7 +98,7 @@ module.exports = {
 
         // Create or update customer record
         const customer = {
-            discordUserID: interaction.user.id,
+            discordId: interaction.user.id,
             email,
             activeSubscribed: true,
             plans: {},
