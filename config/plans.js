@@ -1,18 +1,14 @@
 /**
  * This file defines the mapping between Stripe plan IDs and Discord roles.
  * 
- * If only one plan-role pair is defined, the system will work in legacy mode
- * and assign that role to all active subscribers.
+ * If only one plan-role pair is defined in the enviroment file, 
+ * the system will work in legacy mode and assign that role to all active subscribers.
  * 
- * If multiple plan-role pairs are defined, the system will assign roles
+ * If multiple plan-role pairs are defined here, the system will assign roles
  * based on the specific plan IDs of the user's active subscriptions.
  */
 
 module.exports = {
-    // Legacy mode - this will be used if no plan-specific mappings are defined
-    // or as a fallback when a user has an active subscription but its plan ID doesn't match any defined mapping
-    defaultRole: process.env.PAYING_ROLE_ID,
-    
     /**
      * Plan-specific role mappings
      * Format: 'stripe_plan_id': 'discord_role_id'
