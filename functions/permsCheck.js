@@ -85,11 +85,11 @@ module.exports = async function permsCheck(client) {
             continue;
         }
 
-        const customerId = await stripe_1.resolveCustomerIdFromEmail(customer.email);
+        const customerIds = await stripe_1.resolveCustomerIdFromEmail(customer.email);
 
-        if (!customerId) {
+        if (!customerIds || customerIds.length === 0) {
 
-            console.log(`[Account Verification] Could not find customer id for ${customer.email}`);
+            console.log(`[Account Verification] Could not find any customer ids for ${customer.email}`);
 
             if (customer.activeSubscribed === true) {
                 guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordUserID}, <@${customer.discordUserID}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
@@ -102,8 +102,25 @@ module.exports = async function permsCheck(client) {
             }
         }
 
-        const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
-        const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions) || [];
+        /*
+        // Slower version:
+        let allSubscriptions = [];
+        for (const customerId of customerIds) {
+            const customerSubscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
+            allSubscriptions = [...allSubscriptions, ...customerSubscriptions];
+        }
+        */
+
+        // Collect all subscriptions from all customer IDs
+        const subscriptions = await Promise.all(
+            customerIds.map(async (cId) => {
+                return await stripe_1.findSubscriptionsFromCustomerId(cId);
+            })
+        );
+        // Flatten the array of subscription arrays
+        const allSubscriptions = subscriptions.flat();
+        // Filter the active subscriptions from the list of subscriptions
+        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 
         if (activeSubscriptions.length > 0) {
             
@@ -214,7 +231,7 @@ module.exports = async function permsCheck(client) {
         // Check for expired or canceled subscriptions
         // If there are no active subscriptions but the user had them before, handle expiration
         // Also handle the case where all/every subscriptions are 'unpaid'
-        if ((activeSubscriptions.length === 0 || subscriptions.every(sub => sub.status === 'unpaid')) && customer.activeSubscribed) {
+        if ((activeSubscriptions.length === 0 || allSubscriptions.every(sub => sub.status === 'unpaid')) && customer.activeSubscribed) {
             console.log(`[Account Verification] No active subscriptions found for: ${customer.email}.`);
             member?.send({ embeds: [getExpiredEmbed()] }).catch(() => {});
             makeMemberExpire(customer, member, guild, collection);
@@ -237,7 +254,7 @@ module.exports = async function permsCheck(client) {
                     });
                     
                     // Check if this plan exists in subscriptions but is unpaid
-                    const isUnpaid = subscriptions.some(sub => {
+                    const isUnpaid = allSubscriptions.some(sub => {
                         const subPlanId = sub.items.data[0]?.plan.id;
                         return subPlanId === planId && sub.status === 'unpaid';
                     });

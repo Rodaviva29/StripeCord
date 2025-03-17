@@ -127,13 +127,13 @@ module.exports = {
 
         
         // customer id from stripe api with email provided.
-        const customerId = await stripe_1.resolveCustomerIdFromEmail(email);
+        const customerIds = await stripe_1.resolveCustomerIdFromEmail(email);
 
         /**
          * If the user doesn't have an account created in Stripe, we'll let them know.
          * This is triggered when the user uses the command with an email valid and without an stripe account.
          */
-        if (!customerId) {
+        if (!customerIds || customerIds.length === 0) {
 
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided doesn't have an account created in Stripe with us. Please buy a subscription through the link: ${process.env.STRIPE_PAYMENT_LINK} to get started. After a successful purchase, you can use execute this command again.`)
@@ -144,10 +144,16 @@ module.exports = {
 
         }
 
-        // Get all the subscriptions from the customer ID
-        const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
+        // Collect all subscriptions from all customer IDs
+        const subscriptions = await Promise.all(
+            customerIds.map(async (cId) => {
+                return await stripe_1.findSubscriptionsFromCustomerId(cId);
+            })
+        );
+        // Flatten the array of subscription arrays
+        const allSubscriptions = subscriptions.flat();
         // Filter the active subscriptions from the list of subscriptions
-        const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions);
+        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions);
 
 
         /**

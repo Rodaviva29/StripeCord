@@ -61,7 +61,14 @@ module.exports = {
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
         
         const customerId = await stripe_1.resolveCustomerIdFromEmail(discordCustomer.email);
-        const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
+        const subscriptions = await Promise.all(
+            customerId.map(async (cId) => {
+                return await stripe_1.findSubscriptionsFromCustomerId(cId);
+            })
+        );
+        
+        // Flatten the array of subscription arrays
+        const allSubscriptions = subscriptions.flat();
 
         const status = new EmbedBuilder()
         .setAuthor({
@@ -72,7 +79,7 @@ module.exports = {
         .addFields([
             {
                 name: lang.commands.admin.status.subscriptionsFieldName,
-                value: subscriptions.length > 0 ? subscriptions.map((subscription) => {
+                value: allSubscriptions.length > 0 ? allSubscriptions.map((subscription) => {
                     let name = subscription.items.data[0]?.plan.id
                         .replace(/_/g, ' ')
                         .replace(/^\w|\s\w/g, (l) => l.toUpperCase());

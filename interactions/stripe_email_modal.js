@@ -65,11 +65,11 @@ module.exports = {
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
-        // Get customer ID from Stripe API
-        const customerId = await stripe_1.resolveCustomerIdFromEmail(email);
+        // Get customer IDs from Stripe API
+        const customerIds = await stripe_1.resolveCustomerIdFromEmail(email);
 
         // If customer doesn't exist in Stripe
-        if (!customerId) {
+        if (!customerIds || customerIds.length === 0) {
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided doesn't have an account created in Stripe with us. Please buy a subscription through the link: ${process.env.STRIPE_PAYMENT_LINK} to get started. After a successful purchase, you can try again.`)
                 .setColor('#FDDE5D');
@@ -77,9 +77,16 @@ module.exports = {
             return;
         }
 
-        // Get subscriptions and check if any are active
-        const subscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
-        const activeSubscriptions = stripe_1.findActiveSubscriptions(subscriptions);
+        // Collect all subscriptions from all customer IDs
+        const subscriptions = await Promise.all(
+            customerIds.map(async (cId) => {
+                return await stripe_1.findSubscriptionsFromCustomerId(cId);
+            })
+        );
+        // Flatten the array of subscription arrays
+        const allSubscriptions = subscriptions.flat();
+        // Filter the active subscriptions from the list of subscriptions
+        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 
         if (!(activeSubscriptions.length > 0)) {
             const embed = new EmbedBuilder()

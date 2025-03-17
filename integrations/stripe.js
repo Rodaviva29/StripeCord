@@ -4,10 +4,11 @@
 const sleep = async (ms) => await new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Gets the Stripe customer ID for a given user email
+ * Gets all Stripe customer IDs for a given user email
+ * @returns {Promise<string[]>} Array of customer IDs
  */
 const resolveCustomerIdFromEmail = async (email) => {
-    let customerData;
+    let matchingCustomers = [];
 
     if (email.includes('+')) {
         const endPart = email.split('+')[1];
@@ -21,8 +22,7 @@ const resolveCustomerIdFromEmail = async (email) => {
         });
 
         const responseData = await response.json();
-        const matchingCustomers = responseData.data.filter((c) => c.email === email);
-        customerData = matchingCustomers[0];
+        matchingCustomers = responseData.data.filter((c) => c.email === email);
     } else {
         await sleep(2000); // 2-second delay
 
@@ -34,10 +34,11 @@ const resolveCustomerIdFromEmail = async (email) => {
         });
 
         const responseData = await response.json();
-        customerData = responseData.data[0];
+        matchingCustomers = responseData.data || [];
     }
 
-    return customerData?.id;
+    // Return an array of customer IDs
+    return matchingCustomers.map(customer => customer.id).filter(Boolean);
 }
 exports.resolveCustomerIdFromEmail = resolveCustomerIdFromEmail;
 
