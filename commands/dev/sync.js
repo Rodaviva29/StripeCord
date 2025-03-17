@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const permsCheck = require('../../functions/permsCheck');
+const safetyCheck = require('../../functions/safetyCheck');
 
 // Load language file based on environment variable
 const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
