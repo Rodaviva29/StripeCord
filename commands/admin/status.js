@@ -76,6 +76,7 @@ module.exports = {
             iconURL: user.displayAvatarURL()
         })
         .setColor('#73a3c1')
+        .setFooter({ text: lang.commands.admin.status.embedFooter.replace('{email}', discordCustomer.email || 'N/A') })
         .addFields([
             {
                 name: lang.commands.admin.status.subscriptionsFieldName,
