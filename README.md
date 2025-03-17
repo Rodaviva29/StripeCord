@@ -1,23 +1,16 @@
 **The Ultimate Discord Bot for Seamless Subscription Management with Stripe!**
 
-This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
+StripeCord is a simple, free solution to seamlessly integrate Stripe and Discord. It connects directly to the Stripe API, with no extra fees involved. All your customers need to do is enter the email address they used for their Stripe subscription via a Discord command, and they’ll get instant access. Plus, the bot automatically checks every X hours to ensure all subscriptions are still valid.
 
 ## 🧪 Beta Notes  
 - Stripe Cord is having a big overhaul w/ support for multiple roles and +, check Stripe Cord V2 in [Dev Branch](https://github.com/Rodaviva29/StripeCord/tree/dev).
 - This is a **tested Beta Version**, not a full release. Breaking errors may occur, please report them in my Discord DM `Rodaviva` — I’d greatly appreciate it!
 
-If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project.
-
-## Features
-
-1. Force Link Users to a E-mail with a Command;
-2. Users themselfs can Link their E-mail with a Command;
-3. Admin Command to Check the Status of the Subscription from Stripe;
-4. Configure the name of the commands, the time the check will execute and more with `.env` file.
+If anyone would like to help the project, I would be grateful if you could make PRs or create a issue for enhancement features or bugs found.
 
 ## Wiki / Documentation
 
-Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project.
+Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project and to see all the features.
 
 ## License
 
