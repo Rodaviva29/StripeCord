@@ -40,6 +40,7 @@ module.exports = {
 
                 embedNoDiscordCustomerDescription: ":x: | There is no **Stripe Account** associated with {usertag} account.",
                 authorNameAccess: "{user_tag}' Access",
+                embedFooter: "This account is associated with {email}.",
                 subscriptionsFieldName: `All Subscriptions from ${process.env.SUBSCRIPTION_NAME}`,
                 noSubscriptionsMessage: "There are no subscriptions for this customer.",
                 renewalCancelledStatus: "❌ Renewal Cancelled (yet to be expired)",
