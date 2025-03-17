@@ -1,6 +1,6 @@
 **The Ultimate Discord Bot for Seamless Subscription Management with Stripe!**
 
-This StripeCord bot is useful to make an easy free integration with those two platforms. It makes direct requests to Stripe API without fees. It's just as simple as you think! Customers only need to provide e-mail address they used in Stripe Subscriptions within a Discord Command and they get instant access. There is a function to check every X hours if all the subscriptions are active or not.
+StripeCord is a simple, free solution to seamlessly integrate Stripe and Discord. It connects directly to the Stripe API, with no extra fees involved. All your customers need to do is enter the email address they used for their Stripe subscription via a Discord command, and they’ll get instant access. Plus, the bot automatically checks every X hours to ensure all subscriptions are still valid.
 
 ## :warning: StripeCord V2 BETA RELEASE | IMPORTANT NOTICE
 
@@ -10,7 +10,7 @@ This StripeCord bot is useful to make an easy free integration with those two pl
 - Added numerous test scenarios to ensure system stability.  
 - This is a **tested Beta Version**, not a full release. Breaking errors may occur.
 
-If anyone would like to help the project, I would be grateful if you could make pull requests on what I still have pending, to enrich this project. Any [Ko-Fis](https://ko-fi.com/rodaviva) given would be greatly welcome to allow me to continue to mantain this project development.
+If anyone would like to help the project, I would be grateful if you could make PRs or create a issue for enhancement features or bugs found. Any [Ko-Fis](https://ko-fi.com/rodaviva) given would be greatly welcome to allow me to continue to mantain this project development.
 
 ## 🛠 Changes & Improvements (v2.0)
 
@@ -76,20 +76,22 @@ If anyone would like to help the project, I would be grateful if you could make 
 - **Resolved issue in linking logic logs**: The system now correctly logs whether a user is performing a new link or simply resyncing their roles.
 - **General code improvements**: Minor bug fixes and code optimization across various modules.
 
+## 🛠 Changes & Improvements (v2.3 - Release Candidate)
+
+### 🔧 New Features
+- **Added translation/languagem system**: Now you can translate the bot to your language and configure the language in separate files in config/lang/ making updating the bot easier.
+
+### 🔄 Configurations
+- Made optional configurations of the name of the commands in the .env file.
+
+### 🕒 Sync & Execution Improvements
+- **Customer id missing logic changed**: Now if the customer id is missing, the bot will log the error, delete the user from the database and send a message to the user if the subscriptions was previously active and remove the roles from the user.
 
 ---
 
-## Features
-
-1. Force Link Users to an E-mail with a Command;
-2. Users themselfs can Link their E-mail with a Command or w/ a Message Button;
-3. Admin Command to Check the Status of the Subscription from Stripe;
-4. Configure the name of the commands, the time the check will execute and + with `.env` file and `config/plans.js`.
-5. Support for different Discord Roles for Different Plans and Stripe Subscriptions. (Plan ID, price_XXX)
-
 ## Wiki / Documentation
 
-Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project.
+Please check the [Wiki / Docs](https://github.com/Rodaviva29/StripeCord/wiki) to get started with this project and to see all the awesome features.
 
 ## License
 
@@ -97,11 +99,13 @@ This project is licensed under the MIT License - check the [LICENSE.md](LICENSE.
 
 ## Acknowledgements
 
-Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot). Converted from TypeScript in JavaScript as I prefer JS.
-**Database Core**: Mongo DB Atlas instead of PostGres to be ready to go! (If you want to change the database type to SQL, I can open a branch for you, give me a thumbs up!)
+Core concept inspired by [Androz2091/stripe-discord-bot](https://github.com/Androz2091/stripe-discord-bot).
+
+This version uses JavaScript instead of TypeScript and noSQL (MongoDB) instead of SQL. 
+- Want to switch to SQL? Just give me a thumbs up and I’ll create a branch for you!
 
 ---
 
-We hope you enjoy using Stripe Cord. If you have any questions or issues, feel free to contact me on Discord (prefereble) or via email. My Discord nickname is `Rodaviva`, and you can reach me at `rodaviva29@gmail.com` via mail.
+We hope you enjoy using Stripe Cord. If you have any questions or issues, feel free to contact me on Discord (prefereble) or via chat in https://chung-jf.me. My Discord nickname is `Rodaviva`.
 
 **Safe Contributions!** 💸

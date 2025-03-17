@@ -1,12 +1,15 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const planConfig = require("../../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     cooldown: 7200,
     data: new SlashCommandBuilder()
         .setName(process.env.COMMAND_NAME_UNLINK || 'unlink')
         .setDMPermission(true)
-        .setDescription('Unlink your Stripe Account from your Discord Account and remove all roles.'),
+        .setDescription(lang.commands.stripe.unlink.slashCommandDescription),
 
     async execute(client, interaction, database) {
         const { discordDB } = database;
@@ -21,18 +24,27 @@ module.exports = {
             // If the user is not in the database, let them know
             if (!userCustomer) {
                 const embed = new EmbedBuilder()
-                    .setDescription(`Hey **${interaction.user.username}**, you don't have an account linked with us. There's nothing to unlink.`)
+                    .setDescription(lang.commands.stripe.unlink.noAccountLinked
+                        .replace('{username}', interaction.user.username))
                     .setColor('#FD5D5D');
                 await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
                 return;
             }
 
             // Create confirmation embed
+            const accountFoundAuthor = lang.commands.stripe.unlink.accountFoundAuthor
+                .replace('{user_tag}', interaction.user.tag);
+                
+            const accountFoundDescription = lang.commands.stripe.unlink.accountFoundDescription
+                .replace('{user_tag}', interaction.user.tag)
+                .replace('{user_id}', interaction.user.id)
+                .replace('{email}', userCustomer.email);
+                
             const embed = new EmbedBuilder()
-                .setAuthor({ name: `Account found: ${interaction.user.tag}`, iconURL: 'https://cdn.discordapp.com/emojis/1124730815901868133.webp?size=160&quality=lossless'})
-                .setDescription(`> Member: **${interaction.user.tag}** (${interaction.user.id}, <@${interaction.user.id}>)\n> Email: \`${userCustomer.email}\`.`)
+                .setAuthor({ name: accountFoundAuthor, iconURL: 'https://cdn.discordapp.com/emojis/1124730815901868133.webp?size=160&quality=lossless'})
+                .setDescription(accountFoundDescription)
                 .setColor("D4DEE6")
-                .setFooter({ text: 'Are you sure you want to unlink your account and remove all roles?' });
+                .setFooter({ text: lang.commands.stripe.unlink.confirmationFooter });
             
             // Create confirmation buttons
             const confirmationMessage = await interaction.reply({ 
@@ -43,11 +55,11 @@ module.exports = {
                         .addComponents(
                             new ButtonBuilder()
                                 .setCustomId('confirmUnlink')
-                                .setLabel('Confirm Unlink')
+                                .setLabel(lang.commands.stripe.unlink.confirmButtonLabel)
                                 .setStyle(ButtonStyle.Success),
                             new ButtonBuilder()
                                 .setCustomId('cancelUnlink')
-                                .setLabel('Cancel')
+                                .setLabel(lang.commands.stripe.unlink.cancelButtonLabel)
                                 .setStyle(ButtonStyle.Danger),
                         ),
                 ],
@@ -86,17 +98,23 @@ module.exports = {
                         
                         // Log the unlink action
                         const logsChannel = guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
-                        await logsChannel?.send(`:outbox_tray: **${member.user.tag}** (${member.id}, <@${member.id}>) unlinked their account and removed all roles. Email: \`${userCustomer.email}\`.`);
+                        const logsMessage = lang.commands.stripe.unlink.logsMessage
+                            .replace('{user_tag}', member.user.tag)
+                            .replace('{user_id}', member.id)
+                            .replace('{email}', userCustomer.email);
+                        await logsChannel?.send(logsMessage);
                     }
                     
+                    const successMessage = lang.commands.stripe.unlink.successMessage
+                        .replace('{email}', userCustomer.email);
                     await buttonInteraction.update({ 
-                        content: `Your account with email \`${userCustomer.email}\` has been successfully unlinked and all roles have been removed.`, 
+                        content: successMessage, 
                         components: [], 
                         embeds: [] 
                     });
                 } else if (buttonInteraction.customId === 'cancelUnlink') {
                     await buttonInteraction.update({ 
-                        content: `The unlinking of your account was cancelled.`, 
+                        content: lang.commands.stripe.unlink.cancelMessage, 
                         components: [], 
                         embeds: [] 
                     });
@@ -106,7 +124,7 @@ module.exports = {
             collector.on('end', (collected, reason) => {
                 if (!buttonClicked && reason === 'time') {
                     interaction.editReply({ 
-                        content: `The request to unlink your account has expired.`, 
+                        content: lang.commands.stripe.unlink.timeoutMessage, 
                         components: [], 
                         embeds: [] 
                     });
@@ -115,7 +133,7 @@ module.exports = {
 
         } catch (error) {
             console.error(error);
-            interaction.reply({ content: 'An error occurred while processing your request.', flags: "Ephemeral" });
+            interaction.reply({ content: lang.commands.stripe.unlink.errorMessage, flags: "Ephemeral" });
         }
     }
 };

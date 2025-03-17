@@ -1,16 +1,19 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const inactivityCheck = require('../../functions/inactivityCheck');
 
+// Load language file based on environment variable
+const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     cooldown: 180,
     data: new SlashCommandBuilder()
-        .setName(process.env.COMMAND_NAME_ADMIN_INACTIVITY)
+        .setName(process.env.COMMAND_NAME_ADMIN_INACTIVITY || 'inactivity-admin')
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .setDescription('Remove inactive users from the database.')
+        .setDescription(lang.commands.dev.inactivity.slashCommandDescription)
         .addIntegerOption(option =>
             option.setName('days')
-                .setDescription('Number of days of inactivity before removing users.')
+                .setDescription(lang.commands.dev.inactivity.slashCommandDaysOption)
                 .setRequired(true)
                 .setMinValue(30)
                 .setMaxValue(10000)
@@ -19,14 +22,16 @@ module.exports = {
     async execute(client, interaction, database) {
         const thresholdDays = interaction.options.getInteger('days');
         
-        await interaction.reply({ content: `🔄 | Running inactivity check for users inactive for more than **${thresholdDays} days**...`, flags: "Ephemeral" });
+        const processingMessage = lang.commands.dev.inactivity.processingMessage.replace('{days}', thresholdDays);
+        await interaction.reply({ content: processingMessage, flags: "Ephemeral" });
         
         try {
             await inactivityCheck(client, database, thresholdDays);
-            await interaction.editReply({ content: `✅ | Inactivity check completed! Users inactive for more than **${thresholdDays} days** have been removed from the database.`, flags: "Ephemeral" });
+            const successMessage = lang.commands.dev.inactivity.successMessage.replace('{days}', thresholdDays);
+            await interaction.editReply({ content: successMessage, flags: "Ephemeral" });
         } catch (error) {
             console.error('Error during inactivity check:', error);
-            await interaction.editReply({ content: '❌ | An error occurred while running the inactivity check.', flags: "Ephemeral" });
+            await interaction.editReply({ content: lang.commands.dev.inactivity.errorMessage, flags: "Ephemeral" });
         }
     },
 };

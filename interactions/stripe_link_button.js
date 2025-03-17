@@ -1,5 +1,8 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
+// Load language file based on environment variable
+const lang = require(`../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     customId: 'stripe_link_button',
     
@@ -7,13 +10,13 @@ module.exports = {
         // Create the modal for email input
         const modal = new ModalBuilder()
             .setCustomId('stripe_email_modal')
-            .setTitle('Link your Stripe Account');
+            .setTitle(lang.interactions.stripe_link_button.modalTitle);
 
         // Add the email input field to the modal
         const emailInput = new TextInputBuilder()
             .setCustomId('email_input')
-            .setLabel('Enter your Stripe Account Email')
-            .setPlaceholder('your.email@example.com')
+            .setLabel(lang.interactions.stripe_link_button.emailInputLabel)
+            .setPlaceholder(lang.interactions.stripe_link_button.emailInputPlaceholder)
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 

@@ -8,7 +8,7 @@ const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName(process.env.COMMAND_NAME_BUTTON)
+        .setName(process.env.COMMAND_NAME_BUTTON || 'button-admin')
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
         .setDescription(lang.commands.admin.button.slashCommandDescription),

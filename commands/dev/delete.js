@@ -2,15 +2,18 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Perm
 
 const planConfig = require("../../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName(process.env.COMMAND_NAME_ADMIN_DROP)
+        .setName(process.env.COMMAND_NAME_ADMIN_DROP || 'delete-admin')
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-        .setDescription('Admin command to remove a user from the database.')
+        .setDescription(lang.commands.dev.delete.slashCommandDescription)
         .addUserOption(option =>
             option.setName('member')
-                .setDescription('Choose the user you want to remove from the database.')
+                .setDescription(lang.commands.dev.delete.slashCommandUserOption)
                 .setRequired(true)
         ),
 
@@ -22,7 +25,10 @@ module.exports = {
         const member = await interaction.guild?.members.fetch(customer_discord.id)?.catch(() => { });
 
         if (!member) {
-            interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${customer_discord?.id}) __it's not in Discord Server__, please remove the data directly from the DB!`, flags: "Ephemeral" });
+            const userNotInServerMessage = lang.commands.dev.delete.userNotInServer
+                .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
+                .replace('{user_id}', customer_discord?.id);
+            interaction.reply({ content: userNotInServerMessage, flags: "Ephemeral" });
             return;
         }
 
@@ -38,15 +44,26 @@ module.exports = {
             });
     
             if (!userCustomer) {
-                interaction.reply({ content: `❌ | ${customer_discord?.tag || 'Unknown Account'} (${member.user?.id}) __it's not in the database__!`, flags: "Ephemeral" });
+                const userNotInDatabaseMessage = lang.commands.dev.delete.userNotInDatabase
+                    .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
+                    .replace('{user_id}', member.user?.id);
+                interaction.reply({ content: userNotInDatabaseMessage, flags: "Ephemeral" });
                 return;
             }
 
+            const accountFoundAuthor = lang.commands.dev.delete.accountFoundAuthor
+                .replace('{user_tag}', customer_discord?.tag || 'Unknown Account');
+                
+            const accountFoundDescription = lang.commands.dev.delete.accountFoundDescription
+                .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
+                .replace('{user_id}', member.user?.id)
+                .replace('{email}', userCustomer.email);
+                
             const embed = new EmbedBuilder()
-                .setAuthor({ name: `Account found: ${customer_discord?.tag || 'Unknown Account'}`, iconURL: 'https://cdn.discordapp.com/emojis/1124730815901868133.webp?size=160&quality=lossless'})
-                .setDescription(`> Member: **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>)\n> Email: \`${userCustomer.email}\`.`)
+                .setAuthor({ name: accountFoundAuthor, iconURL: 'https://cdn.discordapp.com/emojis/1124730815901868133.webp?size=160&quality=lossless'})
+                .setDescription(accountFoundDescription)
                 .setColor("D4DEE6")
-                .setFooter({ text: 'Are you sure you want to remove this user from the database?'});
+                .setFooter({ text: lang.commands.dev.delete.confirmationFooter });
                 
     
             const confirmationMessage = await interaction.reply({ embeds: [embed],
@@ -56,11 +73,11 @@ module.exports = {
                         .addComponents(
                             new ButtonBuilder()
                                 .setCustomId('confirmDelete')
-                                .setLabel('Confirm Drop')
+                                .setLabel(lang.commands.dev.delete.confirmButtonLabel)
                                 .setStyle('Success'),
                             new ButtonBuilder()
                                 .setCustomId('cancelDelete')
-                                .setLabel('Cancel')
+                                .setLabel(lang.commands.dev.delete.cancelButtonLabel)
                                 .setStyle('Danger'),
                         ),
                 ],
@@ -96,23 +113,37 @@ module.exports = {
                     }
                     
                     await collection.deleteOne({ discordId: customer_discord.id });
-                    await buttonInteraction.update({ content: `The account of **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) with the e-mail address: \`${userCustomer.email}\` was **successfully dropped**!`, components: [], embeds: [] });
-                    await logsChannel?.send(`:asterisk: **ADMIN:** **${admin.user?.tag || 'Unknown Account'}** (${admin.user?.id}, <@${admin.user?.id}>) deleted **${customer_discord?.tag || 'Unknown Account'}** (${member.user?.id}, <@${member.user?.id}>) Account with the e-mail address: \`${userCustomer.email}\`.`);
+                    const successMessage = lang.commands.dev.delete.successMessage
+                        .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
+                        .replace('{user_id}', member.user?.id)
+                        .replace('{email}', userCustomer.email);
+                    await buttonInteraction.update({ content: successMessage, components: [], embeds: [] });
+                    const logsMessage = lang.commands.dev.delete.logsMessage
+                        .replace('{admin_tag}', admin.user?.tag || 'Unknown Account')
+                        .replace('{admin_id}', admin.user?.id)
+                        .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
+                        .replace('{user_id}', member.user?.id)
+                        .replace('{email}', userCustomer.email);
+                    await logsChannel?.send(logsMessage);
 
                 } else if (buttonInteraction.customId === 'cancelDelete') {
-                    await buttonInteraction.update({ content: `The action regarding the __${userCustomer.email}__ was **cancelled**!`, components: [], embeds: [] });
+                    const cancelMessage = lang.commands.dev.delete.cancelMessage
+                        .replace('{email}', userCustomer.email);
+                    await buttonInteraction.update({ content: cancelMessage, components: [], embeds: [] });
                 }
             });
             
             collector.on('end', (collected, reason) => {
                 if (!buttonClicked && reason === 'time') {
-                    interaction.editReply({ content: `The request for confirmation of deletion of __${userCustomer.email}__ **expired**.`, components: [], embeds: [] });
+                    const timeoutMessage = lang.commands.dev.delete.timeoutMessage
+                        .replace('{email}', userCustomer.email);
+                    interaction.editReply({ content: timeoutMessage, components: [], embeds: [] });
                 }
             });
 
         } catch (error) {
             console.error(error);
-            interaction.reply({ content: 'An error was logged when executing this command.', flags: "Ephemeral" });
+            interaction.reply({ content: lang.commands.dev.delete.errorMessage, flags: "Ephemeral" });
         }
     }
 };

@@ -6,6 +6,9 @@ const path = require('path');
 const interactionHandlers = new Map();
 const interactionsPath = path.join(__dirname, '..', 'interactions');
 
+// Load language file based on environment variable
+const lang = require(`../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 if (fs.existsSync(interactionsPath)) {
     const interactionFiles = fs.readdirSync(interactionsPath).filter(file => file.endsWith('.js'));
     
@@ -41,7 +44,7 @@ module.exports = {
             
                 if (now < expirationTime) {
                     const expiredTimestamp = Math.round(expirationTime / 1_000);
-                    return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, flags: "Ephemeral" });
+                    return interaction.reply({ content: lang.events.interactionCreate.cooldownInteraction.replace('{commandName}', command.data.name).replace('{expiredTimestamp}', `<t:${expiredTimestamp}:R>`), flags: "Ephemeral" });
                 }
             }
     
@@ -58,9 +61,9 @@ module.exports = {
             } catch (error) {
                 console.error(error);
                 if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ content: 'There was an error while executing this command!', flags: "Ephemeral" });
+                    await interaction.followUp({ content: lang.events.interactionCreate.errorCommand, flags: "Ephemeral" });
                 } else {
-                    await interaction.reply({ content: 'There was an error while executing this command!', flags: "Ephemeral" });
+                    await interaction.reply({ content: lang.events.interactionCreate.errorCommand, flags: "Ephemeral" });
                 }
             }
         }
@@ -72,9 +75,9 @@ module.exports = {
             } catch (error) {
                 console.error(`Error executing interaction handler for ${interaction.customId}:`, error);
                 if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ content: 'There was an error while processing your interaction!', flags: "Ephemeral" });
+                    await interaction.followUp({ content: lang.events.interactionCreate.errorInteraction, flags: "Ephemeral" });
                 } else {
-                    await interaction.reply({ content: 'There was an error while processing your interaction!', flags: "Ephemeral" });
+                    await interaction.reply({ content: lang.events.interactionCreate.errorInteraction, flags: "Ephemeral" });
                 }
             }
         }

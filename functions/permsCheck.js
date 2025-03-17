@@ -2,6 +2,9 @@ const { EmbedBuilder } = require('discord.js');
 const stripe_1 = require("../integrations/stripe");
 const planConfig = require("../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 // Function to remove roles from a member based on plan configuration
 const removeRolesFromMember = (member) => {   
     // Remove any plan-specific roles
@@ -18,10 +21,11 @@ const removeRolesFromMember = (member) => {
 
 const getExpiredEmbed = (hasSubscriptions = false, roleName = null) => {
     const embed = new EmbedBuilder()
-        .setTitle(hasSubscriptions ? 'One of your automatic contribution has expired!' : 'Your automatic contribution has expired!')
+        .setTitle(hasSubscriptions ? lang.functions.permsCheck.expiredEmbedTitleMultiple : lang.functions.permsCheck.expiredEmbedTitle)
         .setURL(`${process.env.STRIPE_PAYMENT_LINK}`)
         .setColor("#73a3c1")
-        .setDescription(`Please visit ${process.env.STRIPE_PAYMENT_LINK} to maintain your ${roleName ? `${roleName}` : ''} benefits.`);
+        .setDescription(lang.functions.permsCheck.expiredEmbedDescription
+            .replace('{role_name}', roleName ? `${roleName}` : ''));
     return embed;
 };
 
@@ -49,7 +53,10 @@ const makeMemberExpire = async (customer, member, guild, collection) => {
     // Use the reusable function to remove roles
     removeRolesFromMember(member);
     
-    guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member?.user?.tag || 'Unknown#0000'}** (${member.id}, <@${member.id}>) lost privileges. Email: \`${customer.email}\`.`); 
+    guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logLostPrivileges
+        .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
+        .replace('{user_id}', member.id)
+        .replace('{email}', customer.email)); 
 
 };
 
@@ -79,7 +86,9 @@ module.exports = async function permsCheck(client) {
             await collection.deleteOne({ _id: customer._id });
             
             // Log the deletion to the logs channel
-            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:outbox_tray: Customer with email \`${customer.email}\` (ID: ${customer.discordId}, <@${customer.discordId}>) was removed from the database because they left the server.`);                
+            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logCustomerNotInGuild
+                .replace('{email}', customer.email)
+                .replace('{user_id}', customer.discordId));                
             console.log(`[Account Verification] Successfully deleted customer: ${customer.email} from database.`);
 
             continue;
@@ -89,17 +98,22 @@ module.exports = async function permsCheck(client) {
 
         if (!customerIds || customerIds.length === 0) {
 
-            console.log(`[Account Verification] Could not find any customer ids for ${customer.email}`);
+            console.log(`[Account Verification] Could not find any customer ids for ${customer.email}, deleting from database.`);
+
+            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logIllegalAction
+                .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
+                .replace('{user_id}', customer.discordId)
+                .replace('{email}', customer.email));
+
+            // Delete the customer from the database
+            await collection.deleteOne({ _id: customer._id });
 
             if (customer.activeSubscribed === true) {
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`**Illegal Action:** Something went wrong, please check why **${member?.user?.tag || 'Unknown#0000'}** (${customer.discordId}, <@${customer.discordId}>) has an invalid (not recognized by Stripe) customer email: __${customer.email}__.`);
+                member?.send({ embeds: [getExpiredEmbed()] }).catch(() => {});
             }
 
-            if (customer.activeSubscribed === false) {
-                // Use the reusable function to remove roles
-                removeRolesFromMember(member);
-                continue;
-            }
+            removeRolesFromMember(member);
+            continue;
         }
 
         /*
@@ -142,7 +156,10 @@ module.exports = async function permsCheck(client) {
                     $set: updateObj
                 });
 
-                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:repeat: **${member?.user?.tag || 'Unknown#0000'}** (${member?.id || customer.discordId}, <@${member?.id || customer.discordId}>) had accesses added again. Email: \`${customer.email}\`.`); 
+                guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logAccessRestored
+                    .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
+                    .replace('{user_id}', member?.id || customer.discordId)
+                    .replace('{email}', customer.email)); 
             }
 
             // Check if we have plan-specific role mappings
@@ -194,16 +211,20 @@ module.exports = async function permsCheck(client) {
                     
                     // Log to the logs channel
                     guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(
-                        `:inbox_tray: **${member.user.tag}** (${member.id}, <@${member.id}>) received new roles: ${rolesList}. Email: \`${customer.email}\`.`
+                        lang.functions.permsCheck.logNewRolesReceived
+                            .replace('{user_tag}', member.user.tag)
+                            .replace('{user_id}', member.id)
+                            .replace('{roles_list}', rolesList)
+                            .replace('{email}', customer.email)
                     );
                     
                     // Optionally notify the user directly
                     /* try {
                         const userNotification = new EmbedBuilder()
-                            .setTitle('New roles assigned!')
-                            .setDescription(`You've been assigned the following roles: ${rolesList}.`)
+                            .setTitle(lang.functions.permsCheck.userNotificationTitle)
+                            .setDescription(lang.functions.permsCheck.userNotificationDescription.replace('{roles_list}', rolesList))
                             .setColor('#73a3c1')
-                            .setFooter({ text: 'Thank you for your subscription!' });
+                            .setFooter({ text: lang.functions.permsCheck.userNotificationFooter });
                             
                         await member.send({ embeds: [userNotification] });
                     } catch (error) {
@@ -281,7 +302,12 @@ module.exports = async function permsCheck(client) {
                         member.send({ embeds: [getExpiredEmbed(true, roleName)] }).catch(() => {});
                         
                         // Log the expiration
-                        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member.user.tag}** (${member.id}, <@${member.id}>) lost privileges for plan ${planId}, role <@&${planRoles[planId]}>. Customer e-mail: \`${customer.email}\`.`);
+                        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logPlanExpired
+                            .replace('{user_tag}', member.user.tag)
+                            .replace('{user_id}', member.id)
+                            .replace('{plan_id}', planId)
+                            .replace('{role_id}', planRoles[planId])
+                            .replace('{email}', customer.email));
                     }
                 }
             }
@@ -328,7 +354,12 @@ module.exports = async function permsCheck(client) {
                         );
                         
                         // Log the role removal
-                        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(`:arrow_lower_right: **${member.user.tag}** (${member.id}, <@${member.id}>) lost privileges for untracked plan ${planId}, role <@&${roleId}>. Customer e-mail: \`${customer.email}\`.`);
+                        guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logUntrackPlanRemoved
+                            .replace('{user_tag}', member.user.tag)
+                            .replace('{user_id}', member.id)
+                            .replace('{plan_id}', planId)
+                            .replace('{role_id}', roleId)
+                            .replace('{email}', customer.email));
                     }
                 }
             }

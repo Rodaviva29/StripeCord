@@ -7,6 +7,9 @@
  */
 const planConfig = require("../config/plans");
 
+// Load language file based on environment variable
+const lang = require(`../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = async function safetyCheck(client) {
     // Skip safety check if disabled in environment variables
     if (process.env.SAFETY_CHECK_ENABLED !== 'true') {
@@ -99,13 +102,16 @@ module.exports = async function safetyCheck(client) {
     const logsChannel = guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
     if (logsChannel && unauthorizedUsers > 0) {
         const message = unauthorizedUsersList.map(user =>
-            `:shield: Removed unauthorized roles from **${user.tag}** (${user.id}, ${user.mention}). User not found in database.`
+            lang.functions.safetyCheck.logRemovedUser
+                .replace('{user_tag}', user.tag)
+                .replace('{user_id}', user.id)
+                .replace('{user_mention}', user.mention)
         ).join('\n');
         
-        const summary = `Safety Check: Removed roles from **${unauthorizedUsers}** unauthorized users.`;
+        const summary = lang.functions.safetyCheck.logSummary.replace('{count}', unauthorizedUsers);
         
         logsChannel.send(`${message}\n\n${summary}`);
     } else if (logsChannel) {
-        logsChannel.send(`:white_check_mark: Safety Check completed. No unauthorized role holders found.`);
+        logsChannel.send(lang.functions.safetyCheck.logNoUnauthorized);
     }
 };

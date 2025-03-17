@@ -5,6 +5,10 @@
  * @param {Object} client - Discord client instance
  * @param {number} thresholdDays - Number of days of inactivity before removing users (optional, defaults to INACTIVITY_THRESHOLD_DAYS env var or 30)
  */
+
+// Load language file based on environment variable
+const lang = require(`../config/lang/${process.env.DEFAULT_LANGUAGE || 'en'}.js`);
+
 module.exports = async function InactivityCheck(client, database, thresholdDays = null) {
     // Use provided database or get from client
     const { discordDB } = database;
@@ -76,9 +80,14 @@ module.exports = async function InactivityCheck(client, database, thresholdDays 
     const logsChannel = guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
     if (logsChannel) {
         const message = usersInfo.map(user =>
-            `:wastebasket: Removed **${user.id}** (${user.mention}) after ${user.inactiveDays} days of inactivity. Email: \`${user.email}\`.`
+            lang.functions.inactivityCheck.logRemovedUser
+                .replace('{user_id}', user.id)
+                .replace('{user_mention}', user.mention)
+                .replace('{days}', user.inactiveDays)
+                .replace('{email}', user.email)
         ).join('\n');
-        const totalRemoved = `Removed **${result.deletedCount}** inactive users.`;
+        const totalRemoved = lang.functions.inactivityCheck.logTotalRemoved
+            .replace('{count}', result.deletedCount);
         
         logsChannel.send(`${message}\n\n${totalRemoved}`);
     }
