@@ -103,7 +103,6 @@ module.exports = async function DailyCheck(client) {
         }
 
         if (!subscriptions.some((sub) => sub.status === 'unpaid')) {
-            const member = guild.members.cache.get(customer.discordUserID);
             console.log(`[Account Verification] Found subscription unpaid: ${customer.email}`);
             member?.send({ embeds: [getExpiredEmbed(0)] }).catch(() => {});
             makeMemberExpire(customer, member, guild, collection);
