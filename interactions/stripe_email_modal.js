@@ -164,14 +164,14 @@ module.exports = {
             if (userCustomer && userCustomer.email && email === userCustomer.email) {
                 const resyncMessage = lang.interactions.stripe_email_modal.logsResyncAccount
                     .replace('{member_tag}', member.user.tag)
-                    .replace('{member_id}', member.user.id)
+                    .replace(/{member_id}/g, member.user.id)
                     .replace('{customer_email}', customer.email)
                     .replace('{roles_text}', roleIdsText);
                 logsChannel?.send(resyncMessage);
             } else {
                 const linkMessage = lang.interactions.stripe_email_modal.logsLinkedAccount
                     .replace('{member_tag}', member.user.tag)
-                    .replace('{member_id}', member.user.id)
+                    .replace(/{member_id}/g, member.user.id)
                     .replace('{customer_email}', customer.email)
                     .replace('{roles_text}', roleIdsText);
                 logsChannel?.send(linkMessage);

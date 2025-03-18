@@ -27,7 +27,7 @@ module.exports = {
         if (!member) {
             const userNotInServerMessage = lang.commands.dev.delete.userNotInServer
                 .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
-                .replace('{user_id}', customer_discord?.id);
+                .replace(/{user_id}/g, customer_discord?.id);
             interaction.reply({ content: userNotInServerMessage, flags: "Ephemeral" });
             return;
         }
@@ -46,7 +46,7 @@ module.exports = {
             if (!userCustomer) {
                 const userNotInDatabaseMessage = lang.commands.dev.delete.userNotInDatabase
                     .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
-                    .replace('{user_id}', member.user?.id);
+                    .replace(/{user_id}/g, member.user?.id);
                 interaction.reply({ content: userNotInDatabaseMessage, flags: "Ephemeral" });
                 return;
             }
@@ -56,7 +56,7 @@ module.exports = {
                 
             const accountFoundDescription = lang.commands.dev.delete.accountFoundDescription
                 .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
-                .replace('{user_id}', member.user?.id)
+                .replace(/{user_id}/g, member.user?.id)
                 .replace('{email}', userCustomer.email);
                 
             const embed = new EmbedBuilder()
@@ -115,14 +115,14 @@ module.exports = {
                     await collection.deleteOne({ discordId: customer_discord.id });
                     const successMessage = lang.commands.dev.delete.successMessage
                         .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
-                        .replace('{user_id}', member.user?.id)
+                        .replace(/{user_id}/g, member.user?.id)
                         .replace('{email}', userCustomer.email);
                     await buttonInteraction.update({ content: successMessage, components: [], embeds: [] });
                     const logsMessage = lang.commands.dev.delete.logsMessage
                         .replace('{admin_tag}', admin.user?.tag || 'Unknown Account')
-                        .replace('{admin_id}', admin.user?.id)
+                        .replace(/{admin_id}/g, admin.user?.id)
                         .replace('{user_tag}', customer_discord?.tag || 'Unknown Account')
-                        .replace('{user_id}', member.user?.id)
+                        .replace(/{user_id}/g, member.user?.id)
                         .replace('{email}', userCustomer.email);
                     await logsChannel?.send(logsMessage);
 

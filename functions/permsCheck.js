@@ -55,7 +55,7 @@ const makeMemberExpire = async (customer, member, guild, collection) => {
     
     guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logLostPrivileges
         .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
-        .replace('{user_id}', member.id)
+        .replace(/{user_id}/g, member.id)
         .replace('{email}', customer.email)); 
 
 };
@@ -88,7 +88,7 @@ module.exports = async function permsCheck(client) {
             // Log the deletion to the logs channel
             guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logCustomerNotInGuild
                 .replace('{email}', customer.email)
-                .replace('{user_id}', customer.discordId));                
+                .replace(/{user_id}/g, customer.discordId));                
             console.log(`[Account Verification] Successfully deleted customer: ${customer.email} from database.`);
 
             continue;
@@ -102,7 +102,7 @@ module.exports = async function permsCheck(client) {
 
             guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logIllegalAction
                 .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
-                .replace('{user_id}', customer.discordId)
+                .replace(/{user_id}/g, customer.discordId)
                 .replace('{email}', customer.email));
 
             // Delete the customer from the database
@@ -158,7 +158,7 @@ module.exports = async function permsCheck(client) {
 
                 guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logAccessRestored
                     .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
-                    .replace('{user_id}', member?.id || customer.discordId)
+                    .replace(/{user_id}/g, member?.id || customer.discordId)
                     .replace('{email}', customer.email)); 
             }
 
@@ -213,7 +213,7 @@ module.exports = async function permsCheck(client) {
                     guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(
                         lang.functions.permsCheck.logNewRolesReceived
                             .replace('{user_tag}', member.user.tag)
-                            .replace('{user_id}', member.id)
+                            .replace(/{user_id}/g, member.id)
                             .replace('{roles_list}', rolesList)
                             .replace('{email}', customer.email)
                     );
@@ -304,7 +304,7 @@ module.exports = async function permsCheck(client) {
                         // Log the expiration
                         guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logPlanExpired
                             .replace('{user_tag}', member.user.tag)
-                            .replace('{user_id}', member.id)
+                            .replace(/{user_id}/g, member.id)
                             .replace('{plan_id}', planId)
                             .replace('{role_id}', planRoles[planId])
                             .replace('{email}', customer.email));
@@ -356,7 +356,7 @@ module.exports = async function permsCheck(client) {
                         // Log the role removal
                         guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logUntrackPlanRemoved
                             .replace('{user_tag}', member.user.tag)
-                            .replace('{user_id}', member.id)
+                            .replace(/{user_id}/g, member.id)
                             .replace('{plan_id}', planId)
                             .replace('{role_id}', roleId)
                             .replace('{email}', customer.email));

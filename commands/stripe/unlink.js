@@ -37,7 +37,7 @@ module.exports = {
                 
             const accountFoundDescription = lang.commands.stripe.unlink.accountFoundDescription
                 .replace('{user_tag}', interaction.user.tag)
-                .replace('{user_id}', interaction.user.id)
+                .replace(/{user_id}/g, interaction.user.id)
                 .replace('{email}', userCustomer.email);
                 
             const embed = new EmbedBuilder()
@@ -100,7 +100,7 @@ module.exports = {
                         const logsChannel = guild.channels.cache.get(process.env.LOGS_CHANNEL_ID);
                         const logsMessage = lang.commands.stripe.unlink.logsMessage
                             .replace('{user_tag}', member.user.tag)
-                            .replace('{user_id}', member.id)
+                            .replace(/{user_id}/g, member.id)
                             .replace('{email}', userCustomer.email);
                         await logsChannel?.send(logsMessage);
                     }

@@ -260,7 +260,7 @@ module.exports = {
             if (userCustomer && userCustomer.email && email === userCustomer.email) {
                 const logsResyncAccount = lang.commands.stripe.link.logsResyncAccount
                     .replace('{member_tag}', member.user.tag)
-                    .replace('{member_id}', member.user.id)
+                    .replace(/{member_id}/g, member.user.id)
                     .replace('{customer_email}', customer.email)
                     .replace('{roles_text}', roleIdsText);
                     
@@ -268,7 +268,7 @@ module.exports = {
             } else {
                 const logsLinkedAccount = lang.commands.stripe.link.logsLinkedAccount
                     .replace('{member_tag}', member.user.tag)
-                    .replace('{member_id}', member.user.id)
+                    .replace(/{member_id}/g, member.user.id)
                     .replace('{customer_email}', customer.email)
                     .replace('{roles_text}', roleIdsText);
                     

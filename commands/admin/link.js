@@ -236,9 +236,9 @@ module.exports = {
             // Format log message with all dynamic variables
             const logMessage = lang.commands.admin.link.logsLinkedAccount
                 .replace('{admin_tag}', admin.user?.tag || 'Unknown Account')
-                .replace('{admin_id}', admin.user?.id)
+                .replace(/{admin_id}/g, admin.user?.id)
                 .replace('{customer_tag}', customer_discord?.tag || 'Unknown Account')
-                .replace('{member_id}', member.user?.id)
+                .replace(/{member_id}/g, member.user?.id)
                 .replace('{customer_email}', customer.email)
                 .replace('{roles_text}', roleIdsText);
                 
