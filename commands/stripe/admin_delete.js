@@ -74,7 +74,7 @@ module.exports = {
 
             let buttonClicked = false;
 
-            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000, max: 1 });
             
             collector.on('collect', async (buttonInteraction) => {
                 buttonClicked = true;
