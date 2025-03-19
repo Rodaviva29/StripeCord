@@ -10,11 +10,12 @@ module.exports = {
     
     async execute(interaction, client, database) {
         const email = interaction.fields.getTextInputValue('email_input');
-        const { discordDB } = database;
-        const collection = discordDB.collection(process.env.DATABASE_COLLECTION_NAME);
 
         // Regex to validate the email
         const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+        const { discordDB } = database;
+        const collection = discordDB.collection(process.env.DATABASE_COLLECTION_NAME);
 
         const userCustomer = await collection.findOne({ 
             discordId: interaction.user.id
@@ -25,7 +26,10 @@ module.exports = {
             discordId: { $ne: interaction.user.id }
         });
 
-        // Email validation
+        /**
+         * If the user types an ~ email that is not valid, we'll let them know.
+         * This is triggered when the user uses the command with an email.
+         */
         if (!emailRegex.test(email)) {
             const embed = new EmbedBuilder()
                 .setDescription(lang.interactions.stripe_email_modal.embedEmailRegexDescription.replace('{username}', interaction.user.username))
@@ -34,7 +38,10 @@ module.exports = {
             return;
         }
 
-        // Check if email is already in use by another user
+        /**
+         * If the user types an email that is already associated with another Discord account, we'll let them know.
+         * This is triggered when the user uses the command with an email.
+         */
         if (existingEmailCustomer) {
             const embed = new EmbedBuilder()
                 .setDescription(lang.interactions.stripe_email_modal.embedExistingEmailCustomerDescription)
@@ -49,12 +56,10 @@ module.exports = {
          * If you want, you can add this code block to deny users to force sync their new roles or renew their past ones. (legacy code)
         
         if (userCustomer && userCustomer.email && email === userCustomer.email) {
-
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided is **already in use** by yourself. Use another e-mail or contact our team if you think this is an error.`)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
 
         }*/
@@ -68,29 +73,15 @@ module.exports = {
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
-        // Get customer IDs from Stripe API
-        const customerIds = await stripe_1.resolveCustomerIdFromEmail(email);
-
-        // If customer doesn't exist in Stripe
-        if (!customerIds || customerIds.length === 0) {
-            const embed = new EmbedBuilder()
-                .setDescription(lang.interactions.stripe_email_modal.embedNoCustomerIdDescription.replace('{email}', email))
-                .setColor('#FDDE5D');
-            await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
-            return;
-        }
-
-        // Collect all subscriptions from all customer IDs
-        const subscriptions = await Promise.all(
-            customerIds.map(async (cId) => {
-                return await stripe_1.findSubscriptionsFromCustomerId(cId);
-            })
-        );
-        // Flatten the array of subscription arrays
-        const allSubscriptions = subscriptions.flat();
+        // Get all subscriptions for the user specific email
+        const allSubscriptions = await stripe_1.getSubscriptionsForEmail(email);
         // Filter the active subscriptions from the list of subscriptions
         const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 
+        /**
+         * If the user doesn't have an active subscription, we'll let them know.
+         * This is triggered when the user uses the command without an active subscription.
+         */
         if (!(activeSubscriptions.length > 0)) {
             const embed = new EmbedBuilder()
                 .setDescription(lang.interactions.stripe_email_modal.embedNoActiveSubscriptionDescription)
@@ -99,7 +90,13 @@ module.exports = {
             return;
         }
 
-        // Create or update customer record
+        /**
+         * MongoDB Structure
+         * Set Discord User ID to the user's ID
+         * Set Email to the email provided
+         * Set Active Subscription to true
+         * Track individual subscription plans
+         */
         const customer = {
             discordId: interaction.user.id,
             email,
@@ -116,6 +113,10 @@ module.exports = {
             }
         }
 
+        /**
+         * If the user already has an entry, we'll update it.
+         * Otherwise, we'll create a new entry.
+         */
         if (userCustomer) {
             await collection.updateOne({ _id: userCustomer._id }, { $set: customer });
         } else {

@@ -46,16 +46,13 @@ module.exports = {
          */
 
         if (userCustomer && !email) {
-
             const embedEmailAssociatedDescription = lang.commands.stripe.link.embedEmailAssociatedDescription
                 .replace('{username}', interaction.user.username)
-                .replace('{email}', userCustomer.email);
-                
+                .replace('{email}', userCustomer.email);      
             const embed = new EmbedBuilder()
                 .setDescription(embedEmailAssociatedDescription)
                 .setColor('#FDDE5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
 
         }
@@ -66,17 +63,13 @@ module.exports = {
          */
         
         if (!email) {
-
             const embedNoEmailDescription = lang.commands.stripe.link.embedNoEmailDescription
-                .replace('{username}', interaction.user.username);
-                
+                .replace('{username}', interaction.user.username);    
             const embed = new EmbedBuilder()
                 .setDescription(embedNoEmailDescription)
                 .setColor('#73a3c1');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
-
         }
 
         /**
@@ -84,33 +77,25 @@ module.exports = {
          * This is triggered when the user uses the command with an email.
          */
         if (!emailRegex.test(email)) {
-
             const embedEmailRegexDescription = lang.commands.stripe.link.embedEmailRegexDescription
-                .replace('{username}', interaction.user.username);
-                
+                .replace('{username}', interaction.user.username); 
             const embed = new EmbedBuilder()
                 .setDescription(embedEmailRegexDescription)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
-
         } 
-
         
         /**
          * If the user types an email that is already associated with another Discord account, we'll let them know.
          * This is triggered when the user uses the command with an email.
          */
         if (existingEmailCustomer) {
-
             const embed = new EmbedBuilder()
                 .setDescription(lang.commands.stripe.link.embedExistingEmailCustomerDescription)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
-
         }
 
         /*
@@ -119,12 +104,10 @@ module.exports = {
          * If you want, you can add this code block to deny users to force sync their new roles or renew their past ones. (legacy code)
         
         if (userCustomer && userCustomer.email && email === userCustomer.email) {
-
             const embed = new EmbedBuilder()
                 .setDescription(`The e-mail provided is **already in use** by yourself. Use another e-mail or contact our team if you think this is an error.`)
                 .setColor('#FD5D5D');
             await interaction.reply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
 
         }*/
@@ -138,50 +121,21 @@ module.exports = {
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
-        
-        // customer id from stripe api with email provided.
-        const customerIds = await stripe_1.resolveCustomerIdFromEmail(email);
-
-        /**
-         * If the user doesn't have an account created in Stripe, we'll let them know.
-         * This is triggered when the user uses the command with an email valid and without an stripe account.
-         */
-        if (!customerIds || customerIds.length === 0) {
-
-            const embed = new EmbedBuilder()
-                .setDescription(lang.commands.stripe.link.embedNoCustomerIdDescription)
-                .setColor('#FDDE5D');
-            await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
-
-            return;
-
-        }
-
-        // Collect all subscriptions from all customer IDs
-        const subscriptions = await Promise.all(
-            customerIds.map(async (cId) => {
-                return await stripe_1.findSubscriptionsFromCustomerId(cId);
-            })
-        );
-        // Flatten the array of subscription arrays
-        const allSubscriptions = subscriptions.flat();
+        // Get all subscriptions for the user specific email
+        const allSubscriptions = await stripe_1.getSubscriptionsForEmail(email);
         // Filter the active subscriptions from the list of subscriptions
-        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions);
-
+        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 
         /**
          * If the user doesn't have an active subscription, we'll let them know.
-         * This is triggered when the user uses the command with an email valid and without an active subscription.
+         * This is triggered when the user uses the command without an active subscription.
          */
         if (!(activeSubscriptions.length > 0)) {
-
             const embed = new EmbedBuilder()
                 .setDescription(lang.commands.stripe.link.embedNoActiveSubscriptionDescription)
                 .setColor('#FD5D5D');
             await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
-
             return;
-
         }
 
         /**

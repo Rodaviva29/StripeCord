@@ -60,15 +60,8 @@ module.exports = {
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
         
-        const customerId = await stripe_1.resolveCustomerIdFromEmail(discordCustomer.email);
-        const subscriptions = await Promise.all(
-            customerId.map(async (cId) => {
-                return await stripe_1.findSubscriptionsFromCustomerId(cId);
-            })
-        );
-        
-        // Flatten the array of subscription arrays
-        const allSubscriptions = subscriptions.flat();
+        // Get all subscriptions for the user specific email
+        const allSubscriptions = await stripe_1.getSubscriptionsForEmail(discordCustomer.email);
 
         const status = new EmbedBuilder()
         .setAuthor({

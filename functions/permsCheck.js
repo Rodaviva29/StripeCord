@@ -94,45 +94,8 @@ module.exports = async function permsCheck(client) {
             continue;
         }
 
-        const customerIds = await stripe_1.resolveCustomerIdFromEmail(customer.email);
-
-        if (!customerIds || customerIds.length === 0) {
-
-            console.log(`[Account Verification] Could not find any customer ids for ${customer.email}, deleting from database.`);
-
-            guild.channels.cache.get(process.env.LOGS_CHANNEL_ID).send(lang.functions.permsCheck.logIllegalAction
-                .replace('{user_tag}', member?.user?.tag || 'Unknown#0000')
-                .replace(/{user_id}/g, customer.discordId)
-                .replace('{email}', customer.email));
-
-            // Delete the customer from the database
-            await collection.deleteOne({ _id: customer._id });
-
-            if (customer.activeSubscribed === true) {
-                member?.send({ embeds: [getExpiredEmbed()] }).catch(() => {});
-            }
-
-            removeRolesFromMember(member);
-            continue;
-        }
-
-        /*
-        // Slower version:
-        let allSubscriptions = [];
-        for (const customerId of customerIds) {
-            const customerSubscriptions = await stripe_1.findSubscriptionsFromCustomerId(customerId);
-            allSubscriptions = [...allSubscriptions, ...customerSubscriptions];
-        }
-        */
-
-        // Collect all subscriptions from all customer IDs
-        const subscriptions = await Promise.all(
-            customerIds.map(async (cId) => {
-                return await stripe_1.findSubscriptionsFromCustomerId(cId);
-            })
-        );
-        // Flatten the array of subscription arrays
-        const allSubscriptions = subscriptions.flat();
+        // Get all subscriptions for the user specific email
+        const allSubscriptions = await stripe_1.getSubscriptionsForEmail(customer.email);
         // Filter the active subscriptions from the list of subscriptions
         const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 

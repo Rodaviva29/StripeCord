@@ -106,42 +106,14 @@ module.exports = {
 
         await interaction.reply({ embeds: [waitMessage], flags: "Ephemeral" });
 
-        
-        // customer ids from stripe api with email provided.
-        const customerIds = await stripe_1.resolveCustomerIdFromEmail(email);
-
-        /**
-         * If the user doesn't have an account created in Stripe, we'll let them know.
-         * This is triggered when the user uses the command with an email valid and without an stripe account.
-         */
-        if (!customerIds || customerIds.length === 0) {
-
-            const noCustomerIdDescription = lang.commands.admin.link.embedNoCustomerIdDescription
-                .replace('{email}', email);
-
-            const embed = new EmbedBuilder()
-                .setDescription(noCustomerIdDescription)
-                .setColor('#FDDE5D');
-            await interaction.editReply({ embeds: [embed], flags: "Ephemeral" });
-
-            return;
-
-        }
-
-        // Collect all subscriptions from all customer IDs
-        const subscriptions = await Promise.all(
-            customerIds.map(async (cId) => {
-                return await stripe_1.findSubscriptionsFromCustomerId(cId);
-            })
-        );
-        // Flatten the array of subscription arrays
-        const allSubscriptions = subscriptions.flat();
+        // Get all subscriptions for the user specific email
+        const allSubscriptions = await stripe_1.getSubscriptionsForEmail(email);
         // Filter the active subscriptions from the list of subscriptions
-        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions);
+        const activeSubscriptions = stripe_1.findActiveSubscriptions(allSubscriptions) || [];
 
         /**
-         * If the admin doesn't have an active subscription, we'll let them know.
-         * This is triggered when the admin uses the command with an email valid and without an active subscription.
+         * If the user doesn't have an active subscription, we'll let them know.
+         * This is triggered when the admin uses the command without an active subscription.
          */
         if (!(activeSubscriptions.length > 0)) {
 

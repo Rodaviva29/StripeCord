@@ -1,64 +1,44 @@
-/**
- * Sleep function
- */
+// Stripe SDK initialization
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
+
+// Sleep function
 const sleep = async (ms) => await new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Gets all Stripe customer IDs for a given user email
- * @returns {Promise<string[]>} Array of customer IDs
+ * Gets all subscriptions for a given email directly
+ * @returns {Promise<Array>} Array of subscriptions
  */
-const resolveCustomerIdFromEmail = async (email) => {
-    let matchingCustomers = [];
+const getSubscriptionsForEmail = async (email) => {
+
+    await sleep(200); // 0.2-second delay
+
+    let matchingCustomers;
 
     if (email.includes('+')) {
         const endPart = email.split('+')[1];
-        await sleep(2000); // 2-second delay
-
-        const response = await fetch(`https://api.stripe.com/v1/customers/search?query=email~'${endPart}'`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${process.env.STRIPE_API_KEY}`
-            }
+        
+        const customers = await stripe.customers.search({
+            query: `email~'${endPart}'`,
+            expand: ["data.subscriptions"],
         });
-
-        const responseData = await response.json();
-        matchingCustomers = responseData.data.filter((c) => c.email === email);
+        
+        // Filter customers to match the exact email
+        matchingCustomers = customers.data.filter((c) => c.email === email);
     } else {
-        await sleep(2000); // 2-second delay
-
-        const response = await fetch(`https://api.stripe.com/v1/customers/search?query=email:'${email}'`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${process.env.STRIPE_API_KEY}`
-            }
+        const customers = await stripe.customers.search({
+            query: `email:'${email}'`,
+            expand: ["data.subscriptions"],
         });
-
-        const responseData = await response.json();
-        matchingCustomers = responseData.data || [];
+        
+        matchingCustomers = customers.data || [];
     }
 
-    // Return an array of customer IDs
-    return matchingCustomers.map(customer => customer.id).filter(Boolean);
-}
-exports.resolveCustomerIdFromEmail = resolveCustomerIdFromEmail;
-
-/**
- * Gets all the Stripe subscriptions from a given customer ID
- */
-const findSubscriptionsFromCustomerId = async (customerId) => {
-    await sleep(2000); // 2-second delay
-    
-    const response = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${customerId}`, {
-        method: 'GET',
-        headers: {
-            Authorization: `Bearer ${process.env.STRIPE_API_KEY}`
-        }
-    });
-
-    const responseData = await response.json();
-    return responseData.data || [];
-}
-exports.findSubscriptionsFromCustomerId = findSubscriptionsFromCustomerId;
+    return matchingCustomers
+        .map((customer) => customer.subscriptions.data)
+        .flat()
+        .filter(Boolean);
+};
+exports.getSubscriptionsForEmail = getSubscriptionsForEmail;
 
 /**
  * Filter the active subscriptions from a list of subscriptions
