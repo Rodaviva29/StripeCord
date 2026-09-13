@@ -6,6 +6,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
+    "csurf": "^1.11.0",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "events": "^3.3.0",

@@ -1,4 +1,5 @@
 const express = require('express');
+const csrf = require('csurf');
 const stripe_1 = require('./stripe');
 const syncCustomer = require('../functions/syncCustomer');
 
@@ -70,8 +71,39 @@ module.exports = function startWebhookServer(client) {
     // Lightweight health endpoint (handy for uptime checks / reverse proxies)
     app.get('/health', (_req, res) => res.status(200).send('OK'));
 
+    // Basic per-IP rate limiting to prevent flooding the webhook endpoint
+    // (e.g. a leaked webhook secret used to spam requests).
+    const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+    const RATE_LIMIT_MAX_REQUESTS = 100;
+    const requestCounts = new Map();
+
+    const webhookRateLimiter = (req, res, next) => {
+        const ip = req.ip;
+        const now = Date.now();
+        const entry = requestCounts.get(ip);
+
+        if (!entry || now - entry.start > RATE_LIMIT_WINDOW_MS) {
+            requestCounts.set(ip, { start: now, count: 1 });
+            return next();
+        }
+
+        entry.count += 1;
+        if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+            console.error(`[Webhook] Rate limit exceeded for ${ip}`);
+            return res.status(429).send('Too Many Requests');
+        }
+
+        next();
+    };
+
+    // CSRF middleware protects any future cookie/session-based routes. It is
+    // skipped for /webhook: Stripe calls this server-to-server (no browser
+    // cookies), and authenticity is instead enforced via signature verification.
+    const csrfProtection = csrf({ cookie: true });
+    app.use((req, res, next) => (req.path === '/webhook' ? next() : csrfProtection(req, res, next)));
+
     // Stripe requires the raw, unparsed body to verify the signature.
-    app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    app.post('/webhook', webhookRateLimiter, express.raw({ type: 'application/json' }), async (req, res) => {
         const signature = req.headers['stripe-signature'];
         let event;
 
