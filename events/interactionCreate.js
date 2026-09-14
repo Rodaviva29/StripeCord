@@ -25,8 +25,9 @@ const MODAL_COOLDOWN_SECONDS = 10;
 /**
  * Per-user cooldown shared by slash commands and modal submissions.
  * Replies with the cooldown message and returns true when the user must wait.
+ * `key` is the internal bucket; `label` is what the user sees in the reply.
  */
-const isOnCooldown = async (interaction, key, seconds) => {
+const isOnCooldown = async (interaction, key, seconds, label = key) => {
     const { cooldowns } = interaction.client;
 
     if (!cooldowns.has(key)) {
@@ -42,7 +43,7 @@ const isOnCooldown = async (interaction, key, seconds) => {
 
         if (now < expirationTime) {
             const expiredTimestamp = Math.round(expirationTime / 1_000);
-            await interaction.reply({ content: lang.events.interactionCreate.cooldownInteraction.replace('{commandName}', key).replace('{expiredTimestamp}', `<t:${expiredTimestamp}:R>`), flags: "Ephemeral" });
+            await interaction.reply({ content: lang.events.interactionCreate.cooldownInteraction.replace('{commandName}', label).replace('{expiredTimestamp}', `<t:${expiredTimestamp}:R>`), flags: "Ephemeral" });
             return true;
         }
     }
@@ -87,7 +88,7 @@ module.exports = {
         // Handle button interactions and modal submissions using the interaction handlers
         if ((interaction.isButton() || interaction.isModalSubmit()) && interactionHandlers.has(interaction.customId)) {
             // Buttons only open the modal; the Stripe lookup happens on submit, so throttle submits.
-            if (interaction.isModalSubmit() && await isOnCooldown(interaction, interaction.customId, MODAL_COOLDOWN_SECONDS)) {
+            if (interaction.isModalSubmit() && await isOnCooldown(interaction, interaction.customId, MODAL_COOLDOWN_SECONDS, lang.events.interactionCreate.emailModalLabel)) {
                 return;
             }
 

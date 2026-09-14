@@ -166,6 +166,7 @@ module.exports = {
     events : {
         interactionCreate: {
             cooldownInteraction: "Please wait, you are on a cooldown for {commandName}. You can use it again {expiredTimestamp}.",
+            emailModalLabel: "email link",
             errorCommand: "There was an error while executing this command!",
             errorInteraction: "There was an error while processing your interaction!"
         }
