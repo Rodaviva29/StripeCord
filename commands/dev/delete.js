@@ -83,7 +83,11 @@ module.exports = {
                 ],
             });
     
-            const filter = (buttonInteraction) => buttonInteraction.customId === 'confirmDelete' || buttonInteraction.customId === 'cancelDelete';
+            // Only accept clicks from the admin who ran the command: the collector listens on the
+            // whole channel, so another admin's concurrent confirmation would also resolve this one.
+            const filter = (buttonInteraction) =>
+                buttonInteraction.user.id === interaction.user.id &&
+                (buttonInteraction.customId === 'confirmDelete' || buttonInteraction.customId === 'cancelDelete');
 
             let buttonClicked = false;
 

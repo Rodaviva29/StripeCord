@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const stripe_1 = require('./stripe');
 const syncCustomer = require('../functions/syncCustomer');
 
@@ -66,12 +67,38 @@ module.exports = function startWebhookServer(client) {
     }
 
     const app = express();
+    app.disable('x-powered-by');
+
+    // Behind a reverse proxy (nginx, Cloudflare, Railway...) Express only sees the
+    // proxy's IP unless told how many hops to trust. Opt-in via TRUST_PROXY so the
+    // rate limiter below keys on the real client IP.
+    const trustProxy = Number(process.env.TRUST_PROXY);
+    if (trustProxy > 0) {
+        app.set('trust proxy', trustProxy);
+    }
+
+    // Throttle IPs that repeatedly fail signature verification. Only non-2xx
+    // responses are counted, so genuine Stripe deliveries (always 200, even for
+    // ignored event types) are never rate limited, no matter how bursty billing
+    // day gets. Signature verification itself is what keeps forged events out;
+    // this just stops an attacker from hammering the endpoint for free.
+    const badSignatureLimiter = rateLimit({
+        windowMs: 60 * 1000,
+        limit: 20,
+        skipSuccessfulRequests: true,
+        standardHeaders: 'draft-7',
+        legacyHeaders: false,
+        handler: (req, res) => {
+            console.error(`[Webhook] Rate limit exceeded for ${req.ip} (repeated invalid signatures).`);
+            res.status(429).send('Too Many Requests');
+        },
+    });
 
     // Lightweight health endpoint (handy for uptime checks / reverse proxies)
     app.get('/health', (_req, res) => res.status(200).send('OK'));
 
     // Stripe requires the raw, unparsed body to verify the signature.
-    app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    app.post('/webhook', badSignatureLimiter, express.raw({ type: 'application/json' }), async (req, res) => {
         const signature = req.headers['stripe-signature'];
         let event;
 

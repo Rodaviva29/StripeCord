@@ -18,9 +18,43 @@ if (fs.existsSync(interactionsPath)) {
     }
 }
 
+// Cooldown applied to modal submissions (e.g. the email link modal). Without it a
+// user could submit unlimited emails to probe which ones have an active subscription.
+const MODAL_COOLDOWN_SECONDS = 10;
+
+/**
+ * Per-user cooldown shared by slash commands and modal submissions.
+ * Replies with the cooldown message and returns true when the user must wait.
+ */
+const isOnCooldown = async (interaction, key, seconds) => {
+    const { cooldowns } = interaction.client;
+
+    if (!cooldowns.has(key)) {
+        cooldowns.set(key, new Collection());
+    }
+
+    const now = Date.now();
+    const timestamps = cooldowns.get(key);
+    const cooldownAmount = seconds * 1_000;
+
+    if (timestamps.has(interaction.user.id)) {
+        const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
+
+        if (now < expirationTime) {
+            const expiredTimestamp = Math.round(expirationTime / 1_000);
+            await interaction.reply({ content: lang.events.interactionCreate.cooldownInteraction.replace('{commandName}', key).replace('{expiredTimestamp}', `<t:${expiredTimestamp}:R>`), flags: "Ephemeral" });
+            return true;
+        }
+    }
+
+    timestamps.set(interaction.user.id, now);
+    setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
+    return false;
+};
+
 module.exports = {
     name: Events.InteractionCreate,
- 
+
     async execute(interaction, client) {
         const database = await client.database;
 
@@ -28,29 +62,11 @@ module.exports = {
         if (interaction.isCommand()) {
             const command = interaction.client.commands.get(interaction.commandName);
 
-            const { cooldowns } = interaction.client;
-
-            if (!cooldowns.has(command.data.name)) {
-                cooldowns.set(command.data.name, new Collection());
-            }
-            
-            const now = Date.now();
-            const timestamps = cooldowns.get(command.data.name);
             const defaultCooldownDuration = 3;
-            const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1_000;
-            
-            if (timestamps.has(interaction.user.id)) {
-                const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
-            
-                if (now < expirationTime) {
-                    const expiredTimestamp = Math.round(expirationTime / 1_000);
-                    return interaction.reply({ content: lang.events.interactionCreate.cooldownInteraction.replace('{commandName}', command.data.name).replace('{expiredTimestamp}', `<t:${expiredTimestamp}:R>`), flags: "Ephemeral" });
-                }
+            if (await isOnCooldown(interaction, command.data.name, command.cooldown ?? defaultCooldownDuration)) {
+                return;
             }
-    
-            timestamps.set(interaction.user.id, now);
-            setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
-            
+
             if (!command) {
                 console.error(`No command matching ${interaction.commandName} was found.`);
                 return;
@@ -70,6 +86,11 @@ module.exports = {
 
         // Handle button interactions and modal submissions using the interaction handlers
         if ((interaction.isButton() || interaction.isModalSubmit()) && interactionHandlers.has(interaction.customId)) {
+            // Buttons only open the modal; the Stripe lookup happens on submit, so throttle submits.
+            if (interaction.isModalSubmit() && await isOnCooldown(interaction, interaction.customId, MODAL_COOLDOWN_SECONDS)) {
+                return;
+            }
+
             try {
                 await interactionHandlers.get(interaction.customId).execute(interaction, client, database);
             } catch (error) {

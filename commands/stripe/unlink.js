@@ -65,10 +65,13 @@ module.exports = {
                 ],
             });
 
-            // Set up button collector
-            const filter = (buttonInteraction) => 
-                buttonInteraction.customId === 'confirmUnlink' || 
-                buttonInteraction.customId === 'cancelUnlink';
+            // Set up button collector. The collector listens on the whole channel, so only
+            // accept clicks from the user who ran the command (otherwise another user's
+            // concurrent /unlink confirmation would also resolve this one).
+            const filter = (buttonInteraction) =>
+                buttonInteraction.user.id === interaction.user.id &&
+                (buttonInteraction.customId === 'confirmUnlink' ||
+                buttonInteraction.customId === 'cancelUnlink');
 
             let buttonClicked = false;
             const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000, max: 1 });
