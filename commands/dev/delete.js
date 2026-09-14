@@ -83,11 +83,16 @@ module.exports = {
                 ],
             });
     
-            const filter = (buttonInteraction) => buttonInteraction.customId === 'confirmDelete' || buttonInteraction.customId === 'cancelDelete';
+            // Collect on the confirmation message itself (not the channel) and only from the admin
+            // who ran the command, so a concurrent /delete-admin prompt (from anyone, including the
+            // same admin) can't resolve this one.
+            const filter = (buttonInteraction) =>
+                buttonInteraction.user.id === interaction.user.id &&
+                (buttonInteraction.customId === 'confirmDelete' || buttonInteraction.customId === 'cancelDelete');
 
             let buttonClicked = false;
 
-            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000, max: 1  });
+            const collector = confirmationMessage.createMessageComponentCollector({ filter, time: 60000, max: 1  });
             
             collector.on('collect', async (buttonInteraction) => {
                 buttonClicked = true;

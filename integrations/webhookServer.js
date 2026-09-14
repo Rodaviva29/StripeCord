@@ -52,6 +52,49 @@ const scheduleSync = (client, customer, ctx) => {
     pendingSyncs.set(key, timer);
 };
 
+// Throttle IPs that repeatedly fail signature verification. Only failures are
+// counted (after constructEvent rejects the payload), so genuine Stripe
+// deliveries are never rate limited no matter how bursty billing day gets.
+// A generic middleware limiter with skipSuccessfulRequests can't give that
+// guarantee: it counts every request up front and only refunds successes once
+// the response finishes, so a burst of in-flight valid events could hit 429.
+const FAILURE_WINDOW_MS = 60 * 1000;
+const FAILURE_LIMIT = 20;
+const signatureFailures = new Map(); // ip -> { count, resetAt }
+
+const getFailureEntry = (ip, now) => {
+    const entry = signatureFailures.get(ip);
+    if (!entry || entry.resetAt <= now) {
+        return null;
+    }
+    return entry;
+};
+
+const isSignatureBlocked = (ip) => {
+    const entry = getFailureEntry(ip, Date.now());
+    return entry !== null && entry.count >= FAILURE_LIMIT;
+};
+
+const recordSignatureFailure = (ip) => {
+    const now = Date.now();
+    const entry = getFailureEntry(ip, now);
+    if (entry) {
+        entry.count += 1;
+    } else {
+        signatureFailures.set(ip, { count: 1, resetAt: now + FAILURE_WINDOW_MS });
+    }
+};
+
+// Drop expired entries so the map doesn't grow with every IP that ever failed.
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of signatureFailures) {
+        if (entry.resetAt <= now) {
+            signatureFailures.delete(ip);
+        }
+    }
+}, FAILURE_WINDOW_MS).unref();
+
 /**
  * Start the Stripe webhook HTTP server.
  * @param {Object} client - Discord client instance (already logged in)
@@ -66,18 +109,33 @@ module.exports = function startWebhookServer(client) {
     }
 
     const app = express();
+    app.disable('x-powered-by');
+
+    // Behind a reverse proxy (nginx, Cloudflare, Railway...) Express only sees the
+    // proxy's IP unless told how many hops to trust. Opt-in via TRUST_PROXY so the
+    // signature-failure throttle keys on the real client IP.
+    const trustProxy = Number(process.env.TRUST_PROXY);
+    if (trustProxy > 0) {
+        app.set('trust proxy', trustProxy);
+    }
 
     // Lightweight health endpoint (handy for uptime checks / reverse proxies)
     app.get('/health', (_req, res) => res.status(200).send('OK'));
 
     // Stripe requires the raw, unparsed body to verify the signature.
     app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+        if (isSignatureBlocked(req.ip)) {
+            console.error(`[Webhook] Rate limit exceeded for ${req.ip} (repeated invalid signatures).`);
+            return res.status(429).send('Too Many Requests');
+        }
+
         const signature = req.headers['stripe-signature'];
         let event;
 
         try {
             event = stripe_1.stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
         } catch (error) {
+            recordSignatureFailure(req.ip);
             console.error('[Webhook] Signature verification failed:', error.message);
             return res.status(400).send(`Webhook Error: ${error.message}`);
         }
